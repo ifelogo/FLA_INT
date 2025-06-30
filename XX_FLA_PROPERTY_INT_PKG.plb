@@ -2186,7 +2186,60 @@ EXCEPTION
 
 END get_sales_countries;
 
+PROCEDURE wrap_create_update_items_json (
+    p_request_id       IN  NUMBER,
+    p_request_phase_id IN  NUMBER,
+    p_draft_flag       IN  VARCHAR2,
+    p_debug_flag       IN  VARCHAR2,
+    p_language         IN  VARCHAR2,
+    p_user_name        IN  VARCHAR2,
+    p_items            IN  XX_FLA_ITEMS_T,
+    p_json_result      OUT CLOB
+) IS
+    l_x_items         XX_FLA_ITEMS_T;
+    l_x_return_status VARCHAR2(10);
+    l_x_msg_error     VARCHAR2(4000);
+    l_json_obj        JSON_OBJECT_T;
+    l_json_arr        JSON_ARRAY_T := JSON_ARRAY_T();
+    l_item_obj        JSON_OBJECT_T;
+BEGIN
+    create_update_items(
+        p_request_id       => p_request_id,
+        p_request_phase_id => p_request_phase_id,
+        p_draft_flag       => p_draft_flag,
+        p_debug_flag       => p_debug_flag,
+        p_language         => p_language,
+        p_user_name        => p_user_name,
+        p_items            => p_items,
+        x_items            => l_x_items,
+        x_return_status    => l_x_return_status,
+        x_msg_error        => l_x_msg_error
+    );
 
+    IF l_x_items IS NOT NULL THEN
+        FOR i IN 1 .. l_x_items.COUNT LOOP
+            l_item_obj := JSON_OBJECT_T();
+            l_item_obj.put('item_id',      l_x_items(i).item_id);
+            l_item_obj.put('country_code', l_x_items(i).country_code);
+            l_item_obj.put('item_code',    l_x_items(i).item_code);
+            l_item_obj.put('description',  l_x_items(i).description);
+            l_item_obj.put('enabled_flag', l_x_items(i).enabled_flag);
+            l_item_obj.put('request_id',   l_x_items(i).request_id);
+            l_json_arr.append(l_item_obj);
+        END LOOP;
+    END IF;
+
+    l_json_obj := JSON_OBJECT_T();
+    l_json_obj.put('x_return_status', l_x_return_status);
+    l_json_obj.put('x_msg_error',     l_x_msg_error);
+    l_json_obj.put('x_items',         l_json_arr);
+
+    p_json_result := l_json_obj.to_clob;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        p_json_result := '{"x_return_status":"E","x_msg_error":"' || REPLACE(SQLERRM, '"', '\"') || '"}';
+END;
 /*=========================================================================+
 |                                                                          |
 | Public Procedure                                                         |

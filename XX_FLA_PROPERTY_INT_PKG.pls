@@ -55,6 +55,17 @@ PROCEDURE get_items_groups(p_request_id        IN     NUMBER
                           ,x_return_status     OUT    VARCHAR2
                           ,x_msg_error         OUT    VARCHAR2
                           );
+PROCEDURE wrap_create_update_items_json (
+    p_request_id       IN  NUMBER,
+    p_request_phase_id IN  NUMBER,
+    p_draft_flag       IN  VARCHAR2,
+    p_debug_flag       IN  VARCHAR2,
+    p_language         IN  VARCHAR2,
+    p_user_name        IN  VARCHAR2,
+    p_items            IN  XX_FLA_ITEMS_T,
+    p_json_result      OUT CLOB
+);
+
 
 /*=========================================================================+
 |                                                                          |
