@@ -1876,6 +1876,58 @@ EXCEPTION
 END get_countries;
 
 
+PROCEDURE wrap_get_countries_json (
+    p_request_id       IN  NUMBER,
+    p_request_phase_id IN  NUMBER,
+    p_draft_flag       IN  VARCHAR2,
+    p_debug_flag       IN  VARCHAR2,
+    p_language         IN  VARCHAR2,
+    p_user_name        IN  VARCHAR2,
+    p_country_code     IN  VARCHAR2,
+    p_json_result      OUT CLOB
+) IS
+    l_countries      XX_FLA_COUNTRIES_T;
+    l_return_status  VARCHAR2(10);
+    l_msg_error      VARCHAR2(4000);
+    l_json_obj       JSON_OBJECT_T;
+    l_json_arr       JSON_ARRAY_T := JSON_ARRAY_T();
+    l_country_obj    JSON_OBJECT_T;
+BEGIN
+    get_countries(
+        p_request_id       => p_request_id,
+        p_request_phase_id => p_request_phase_id,
+        p_draft_flag       => p_draft_flag,
+        p_debug_flag       => p_debug_flag,
+        p_language         => p_language,
+        p_user_name        => p_user_name,
+        p_country_code     => p_country_code,
+        x_items            => l_countries,
+        x_return_status    => l_return_status,
+        x_msg_error        => l_msg_error
+    );
+
+    IF l_countries IS NOT NULL THEN
+        FOR i IN 1 .. l_countries.COUNT LOOP
+            l_country_obj := JSON_OBJECT_T();
+            l_country_obj.put('territory_short_name', l_countries(i).territory_short_name);
+            l_country_obj.put('territory_num',  l_countries(i).territory_num);
+            -- Agrega aquí los demás campos de XX_FLA_COUNTRY_O si existen
+            l_json_arr.append(l_country_obj);
+        END LOOP;
+    END IF;
+
+    l_json_obj := JSON_OBJECT_T();
+    l_json_obj.put('x_return_status', l_return_status);
+    l_json_obj.put('x_msg_error',     l_msg_error);
+    l_json_obj.put('x_items',     l_json_arr);
+
+    p_json_result := l_json_obj.to_clob;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        p_json_result := '{"x_return_status":"E","x_msg_error":"' || REPLACE(SQLERRM, '"', '\"') || '"}';
+END;
+
 
 /*=========================================================================+
 |                                                                          |
