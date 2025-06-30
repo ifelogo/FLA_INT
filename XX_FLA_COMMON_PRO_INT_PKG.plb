@@ -1251,7 +1251,8 @@ END create_next_step_request;
 |    p_user_name            IN      VARCHAR2 Usuario.                          |
 |    p_integration_code     IN      VARCHAR2 Codigo de la integración.         |
 |    p_step                 IN      NUMBER   Id del Paso.                      |
-|    p_request              IN      XX_FLA_COMMON_INT_STEPS_T Listado del      |
+|    p_step_object          IN      VARCHAR2 Nombre del objecto a ejecutar.    |
+|    p_request              IN      XX_FLA_COMMON_EXEC_REQS_T Listado del      |
 |                                             request                          |
 |    x_return_status        OUT     VARCHAR2 Estado de ejecucion.              |
 |    x_msg_error            OUT     VARCHAR2 Mensaje de error.                 |
@@ -1264,7 +1265,8 @@ PROCEDURE execute_pl_request(p_request_id            IN      VARCHAR2
                             ,p_user_name             IN      VARCHAR2
                             ,p_integration_code      IN      VARCHAR2
                             ,p_step                  IN      NUMBER
-                            ,p_request               IN      XX_FLA_COMMON_INT_STEPS_T
+                            ,p_step_object           IN      VARCHAR2
+                            ,p_request               IN      XX_FLA_COMMON_EXEC_REQS_T
                             ,x_return_status         OUT     VARCHAR2
                             ,x_msg_error             OUT     VARCHAR2
                              )
@@ -1279,6 +1281,8 @@ IS
   v_request_list            XX_FLA_COMMON_EXEC_REQS_T;
   v_request_list_select     XX_FLA_COMMON_EXEC_REQS_T;
   v_request_obj             XX_FLA_COMMON_EXEC_REQ_O;
+  v_json_result  CLOB;
+  v_stmt         VARCHAR2(1000);
   --v_values
 
   -- ---------------------------------------------------------------------------
@@ -1287,18 +1291,7 @@ IS
   -- ---------------------------------------------------------------------------
   -- Cursor de c_next_step.
   -- ---------------------------------------------------------------------------
-  CURSOR c_next_step IS
-  SELECT xfcins.from_field
-        ,xfcins.to_field_type
-        ,xfcins.to_field
-        ,xfcins.to_value
-        ,xfcins.transformation
-  FROM dual
-      ,xx_fla_common_int_next_steps xfcins
-  WHERE 1 = 1 
-  AND xfcins.to_step            = p_step
-  AND xfcins.integration_code   = p_integration_code
-  ORDER BY xfcins.request_order;
+
   
 
     
@@ -1404,46 +1397,44 @@ BEGIN
 
     FOR i IN p_request.FIRST .. p_request.LAST LOOP
     
-        
+        v_stmt := 'BEGIN ' || p_step_object || p_request(i).request || ' END;';
+        EXECUTE IMMEDIATE v_stmt USING OUT v_json_result;
+        -- Supón que ya tienes estos valores obtenidos:
+-- v_wrapper_name: nombre completo del wrapper, ej: 'XX_FLA_PROPERTY_INT_PKG.wrap_get_countries_json'
+-- v_param1 ... v_paramN: parámetros de entrada, según tu integración
+-- v_json_result: CLOB resultado
+
+/*DECLARE
+
+  v_req_trx_id   xx_fla_common_int_req_trx.req_trx_id%TYPE;
+BEGIN
+  -- Construcción dinámica del statement para llamar al wrapper
+  v_stmt := 'BEGIN ' || v_wrapper_name || '(:1, :2, :3, :4, :5, :6, :7, :8); END;';
+
+  EXECUTE IMMEDIATE v_stmt
+    USING IN v_param1, IN v_param2, IN v_param3, IN v_param4,
+          IN v_param5, IN v_param6, IN v_param7, OUT v_json_result;
+
+  -- Insertar el resultado en la tabla de tracking
+  v_req_trx_id := xx_fla_common_pro_int_req_trx_s.NEXTVAL;
+  INSERT INTO xx_fla_common_int_req_trx (
+      req_trx_id, request_id, integration_code, trx_date, called_proc, json_result
+  ) VALUES (
+      v_req_trx_id, p_request_id, p_integration_code, SYSDATE, v_wrapper_name, v_json_result
+  );
+
+  x_return_status := 'S';
+  x_msg_error := NULL;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    x_return_status := 'E';
+    x_msg_error := SQLERRM;
+END;*/
         
     END LOOP;
 
-     IF v_request_list_select IS NOT NULL
-     THEN
-
-        IF p_step_type = 'REST'
-        THEN
-        
-            --v_request := r_next_step.to_field || v_request_value || ',' || v_request;
-            null;
-            
-        ELSIF p_step_type = 'PL/SQL' THEN
-        
-        
-        
-            FOR i IN v_request_list_select.FIRST..v_request_list_select.LAST LOOP
-            
-                IF v_request IS NULL THEN
-                    
-                        v_request := v_request_list_select(i).request  ;  
-
-                        
-                    ELSE
-                
-                        v_request := v_request || ',' || v_request_list_select(i).request  ;  
-
-                        
-                END IF;
-                
-                
-            END LOOP;
-            
-        
-        END IF;
-
-    END IF;
-
-
+  END IF;
 
   -- ---------------------------------------------------------------------------
   -- Verifica si se produjo un error.
@@ -1459,8 +1450,8 @@ BEGIN
           );
     ELSE
       
-        x_request := v_request_list;  
-        
+        --x_request := v_request_list;  
+       null; 
         
   END IF;
   -- ---------------------------------------------------------------------------
