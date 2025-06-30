@@ -1,0 +1,19 @@
+=====================================================================
+Script XX_FLA_ITEMS_S.sql
+=====================================================================
+Drop sequence XX_FLA_ITEMS_S
+
+Error starting at line : 35 in command -
+DROP SEQUENCE xx_fla_items_s
+Error report -
+ORA-02289: sequence does not exist
+
+https://docs.oracle.com/error-help/db/ora-02289/02289. 00000 -  "sequence does not exist"
+*Cause:    The specified sequence does not exist, or the user does
+           not have the required privilege to perform this operation.
+*Action:   Make sure the sequence name is correct, and that you have
+           the right to perform the desired operation on this sequence.
+Create sequence XX_FLA_ITEMS_S
+
+Sequence XX_FLA_ITEMS_S created.
+

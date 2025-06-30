@@ -1,0 +1,34 @@
+=====================================================================
+Script XX_FLA_ITEMS_T.sql
+=====================================================================
+Drop type XX_FLA_ITEMS_T
+
+Type XX_FLA_ITEMS_T dropped.
+
+Drop type XX_FLA_ITEM_O
+
+Error starting at line : 38 in command -
+DROP TYPE xx_fla_item_o FORCE
+Error report -
+ORA-04043: object XX_FLA_ITEM_O does not exist
+
+https://docs.oracle.com/error-help/db/ora-04043/04043. 00000 -  "Object %s does not exist."
+*Cause:    An object name was specified that was not recognized by the system.
+           There are several possible causes:
+           - An invalid name for a table, view, sequence, procedure, function,
+           package, or package body was entered. Since the system could not
+           recognize the invalid name, it responded with the message that
+           the named object did not exist.
+           - An attempt was made to rename an index, cluster, or some
+           other object that cannot be renamed.
+*Action:   Check the spelling of the named object and rerun the code. Valid
+           names of tables, views, functions and other database objects can
+           be listed by querying the data dictionary.
+Create type XX_FLA_ITEM_O
+
+Type XX_FLA_ITEM_O compiled
+
+Create type XX_FLA_ITEMS_T
+
+Type XX_FLA_ITEMS_T compiled
+
