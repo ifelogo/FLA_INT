@@ -1877,14 +1877,11 @@ END get_countries;
 
 
 PROCEDURE wrap_get_countries_json (
-    p_request_id       IN  NUMBER,
-    p_request_phase_id IN  NUMBER,
     p_draft_flag       IN  VARCHAR2,
-    p_debug_flag       IN  VARCHAR2,
-    p_language         IN  VARCHAR2,
-    p_user_name        IN  VARCHAR2,
     p_country_code     IN  VARCHAR2,
-    p_json_result      OUT CLOB
+    x_json_result      OUT CLOB,
+    x_return_status         OUT     VARCHAR2
+                                  ,x_msg_error             OUT     VARCHAR2
 ) IS
     l_countries      XX_FLA_COUNTRIES_T;
     l_return_status  VARCHAR2(10);
@@ -1893,9 +1890,9 @@ PROCEDURE wrap_get_countries_json (
     l_json_arr       JSON_ARRAY_T := JSON_ARRAY_T();
     l_country_obj    JSON_OBJECT_T;
 BEGIN
-    get_countries(
+  /*  get_countries(
         p_request_id       => p_request_id,
-        p_request_phase_id => p_request_phase_id,
+        p_request_phase_id => p_request_id,
         p_draft_flag       => p_draft_flag,
         p_debug_flag       => p_debug_flag,
         p_language         => p_language,
@@ -1921,11 +1918,12 @@ BEGIN
     l_json_obj.put('x_msg_error',     l_msg_error);
     l_json_obj.put('x_items',     l_json_arr);
 
-    p_json_result := l_json_obj.to_clob;
-
+    x_json_result := l_json_obj.to_clob;*/
+    x_return_status:='E';x_msg_error:='Falta nivel';
+x_json_result := '{"x_return_status":"E","x_msg_error":"' ||'falta nivel' ||  '"}';
 EXCEPTION
     WHEN OTHERS THEN
-        p_json_result := '{"x_return_status":"E","x_msg_error":"' || REPLACE(SQLERRM, '"', '\"') || '"}';
+        x_json_result := '{"x_return_status":"E","x_msg_error":"' || REPLACE('falta nivel' || SQLERRM, '"', '\"') || '"}';
 END;
 
 

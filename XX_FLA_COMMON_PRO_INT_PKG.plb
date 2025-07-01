@@ -1084,7 +1084,7 @@ BEGIN
       
         IF r_next_step.to_field_type = 'VALUE' THEN
 
-                 v_statement := 'SELECT XX_FLA_COMMON_EXEC_REQ_O(xfcirt.param_value)              ' ||
+                 v_statement := 'SELECT XX_FLA_COMMON_EXEC_REQ_O(''''''''||'||'xfcirt.param_value'||'||'''''''')              ' ||
                                   '  FROM dual                          ' ||   
                                   '  ,xx_fla_common_int_req_trx xfcirt  ' ||
                                   '  WHERE 1 = 1                        ' ||
@@ -1283,6 +1283,8 @@ IS
   v_request_obj             XX_FLA_COMMON_EXEC_REQ_O;
   v_json_result  CLOB;
   v_stmt         VARCHAR2(1000);
+  v_return_status           VARCHAR2(1);
+  
   --v_values
 
   -- ---------------------------------------------------------------------------
@@ -1396,46 +1398,26 @@ BEGIN
 
 
     FOR i IN p_request.FIRST .. p_request.LAST LOOP
-    
-        v_stmt := 'BEGIN ' || p_step_object || p_request(i).request || ' END;';
-        EXECUTE IMMEDIATE v_stmt USING OUT v_json_result;
-        -- Supón que ya tienes estos valores obtenidos:
--- v_wrapper_name: nombre completo del wrapper, ej: 'XX_FLA_PROPERTY_INT_PKG.wrap_get_countries_json'
--- v_param1 ... v_paramN: parámetros de entrada, según tu integración
--- v_json_result: CLOB resultado
+v_mesg_error:= '00';    
+        BEGIN
+        v_stmt := 'DECLARE ' ||
+    'x_json_result CLOB; '||
+    'x_return_status     VARCHAR2(1); '||
+    'x_msg_error     VARCHAR2(2000);BEGIN ' || p_step_object || p_request(i).request || ' END;';
+        EXECUTE IMMEDIATE v_stmt USING OUT v_json_result, OUT x_return_status, OUT x_msg_error;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    v_mesg_error := v_stmt||'->' ||SQLERRM;
+        END;
 
-/*DECLARE
-
-  v_req_trx_id   xx_fla_common_int_req_trx.req_trx_id%TYPE;
-BEGIN
-  -- Construcción dinámica del statement para llamar al wrapper
-  v_stmt := 'BEGIN ' || v_wrapper_name || '(:1, :2, :3, :4, :5, :6, :7, :8); END;';
-
-  EXECUTE IMMEDIATE v_stmt
-    USING IN v_param1, IN v_param2, IN v_param3, IN v_param4,
-          IN v_param5, IN v_param6, IN v_param7, OUT v_json_result;
-
-  -- Insertar el resultado en la tabla de tracking
-  v_req_trx_id := xx_fla_common_pro_int_req_trx_s.NEXTVAL;
-  INSERT INTO xx_fla_common_int_req_trx (
-      req_trx_id, request_id, integration_code, trx_date, called_proc, json_result
-  ) VALUES (
-      v_req_trx_id, p_request_id, p_integration_code, SYSDATE, v_wrapper_name, v_json_result
-  );
-
-  x_return_status := 'S';
-  x_msg_error := NULL;
-
-EXCEPTION
-  WHEN OTHERS THEN
-    x_return_status := 'E';
-    x_msg_error := SQLERRM;
-END;*/
+--v_mesg_error:= '01';
         
     END LOOP;
 
   END IF;
 
+    x_return_status := 'E';
+    x_msg_error     := v_mesg_error;
   -- ---------------------------------------------------------------------------
   -- Verifica si se produjo un error.
   -- ---------------------------------------------------------------------------
