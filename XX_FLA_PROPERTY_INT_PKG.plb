@@ -1876,54 +1876,71 @@ EXCEPTION
 END get_countries;
 
 
-PROCEDURE wrap_get_countries_json (
-    p_draft_flag       IN  VARCHAR2,
-    p_country_code     IN  VARCHAR2,
-    x_json_result      OUT CLOB,
-    x_return_status         OUT     VARCHAR2
-                                  ,x_msg_error             OUT     VARCHAR2
-) IS
-    l_countries      XX_FLA_COUNTRIES_T;
-    l_return_status  VARCHAR2(10);
-    l_msg_error      VARCHAR2(4000);
-    l_json_obj       JSON_OBJECT_T;
-    l_json_arr       JSON_ARRAY_T := JSON_ARRAY_T();
-    l_country_obj    JSON_OBJECT_T;
+PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
+                                   ,p_draft_flag        IN      VARCHAR2
+                                   ,p_debug_flag        IN      VARCHAR2
+                                   ,p_language          IN      VARCHAR2
+                                   ,p_user_name         IN      VARCHAR2
+                                   ,p_json_in           IN  VARCHAR2
+                                   ,x_json_result       OUT CLOB
+                                   ,x_return_status     OUT     VARCHAR2
+                                   ,x_msg_error         OUT     VARCHAR2
+                                    ) IS
+    v_countries      XX_FLA_COUNTRIES_T;
+    v_return_status  VARCHAR2(10);
+    v_msg_error      VARCHAR2(4000);
+    v_json_obj       JSON_OBJECT_T;
+    v_json_arr       JSON_ARRAY_T := JSON_ARRAY_T();
+    v_country_obj    JSON_OBJECT_T;
+    
+      v_json         JSON_OBJECT_T;
+      v_keys         JSON_KEY_LIST;
+      v_in_json      JSON_OBJECT_T := JSON_OBJECT_T();
+  
 BEGIN
-  /*  get_countries(
+  
+
+  v_json := JSON_OBJECT_T.parse(p_json_in); 
+DBMS_OUTPUT.put_line('wrap_get_countries_json1->');
+DBMS_OUTPUT.put_line('wrap_get_countries_json->' ||v_json.get_string('p_draft_mode'));
+DBMS_OUTPUT.put_line('wrap_get_countries_json->' ||v_json.get_string('p_country_code'));
+  
+--v_jo.get_string(v_keys(i))
+    get_countries(
         p_request_id       => p_request_id,
-        p_request_phase_id => p_request_id,
-        p_draft_flag       => p_draft_flag,
+        p_request_phase_id => NULL,
+        p_draft_flag       => v_json.get_string('p_draft_mode'),
         p_debug_flag       => p_debug_flag,
         p_language         => p_language,
         p_user_name        => p_user_name,
-        p_country_code     => p_country_code,
-        x_items            => l_countries,
-        x_return_status    => l_return_status,
-        x_msg_error        => l_msg_error
+        p_country_code     => v_json.get_string('p_country_code'),
+        x_items            => v_countries,
+        x_return_status    => v_return_status,
+        x_msg_error        => v_msg_error
     );
 
-    IF l_countries IS NOT NULL THEN
-        FOR i IN 1 .. l_countries.COUNT LOOP
-            l_country_obj := JSON_OBJECT_T();
-            l_country_obj.put('territory_short_name', l_countries(i).territory_short_name);
-            l_country_obj.put('territory_num',  l_countries(i).territory_num);
+    IF v_countries IS NOT NULL THEN
+        FOR i IN 1 .. v_countries.COUNT LOOP
+            v_country_obj := JSON_OBJECT_T();
+            v_country_obj.put('territory_short_name', v_countries(i).territory_short_name);
+            v_country_obj.put('territory_num',  v_countries(i).territory_num);
             -- Agrega aquí los demás campos de XX_FLA_COUNTRY_O si existen
-            l_json_arr.append(l_country_obj);
+            v_json_arr.append(v_country_obj);
         END LOOP;
     END IF;
 
-    l_json_obj := JSON_OBJECT_T();
-    l_json_obj.put('x_return_status', l_return_status);
-    l_json_obj.put('x_msg_error',     l_msg_error);
-    l_json_obj.put('x_items',     l_json_arr);
+    v_json_obj := JSON_OBJECT_T();
+    v_json_obj.put('x_return_status', v_return_status);
+    v_json_obj.put('x_msg_error',     v_msg_error);
+    v_json_obj.put('x_items',         v_json_arr);
 
-    x_json_result := l_json_obj.to_clob;*/
-    x_return_status:='E';x_msg_error:='Falta nivel';
-x_json_result := '{"x_return_status":"E","x_msg_error":"' ||'falta nivel' ||  '"}';
+    x_json_result := v_json_obj.to_clob;
+    x_return_status:='S';
+    x_msg_error:=NULL;
+    --x_json_result := '{"x_return_status":"E","x_msg_error":"' ||'falta nivel' ||  '"}';
 EXCEPTION
     WHEN OTHERS THEN
-        x_json_result := '{"x_return_status":"E","x_msg_error":"' || REPLACE('falta nivel' || SQLERRM, '"', '\"') || '"}';
+        x_json_result := '{"x_return_status":"E","x_msg_error":"' || REPLACE('falta niveles' || SQLERRM, '"', '\"') || '"}';
 END;
 
 

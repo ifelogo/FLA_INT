@@ -1138,17 +1138,11 @@ BEGIN
         
             FOR i IN v_request_list_select.FIRST..v_request_list_select.LAST LOOP
             
-                IF v_request IS NULL THEN
-                    
-                        v_request := v_request_list_select(i).request  ;  
+                       
+              
+                        v_request := v_request || 'param' || TO_CHAR(i) || ':' || v_request_list_select(i).request || ',';  
 
                         
-                    ELSE
-                
-                        v_request := v_request || ',' || v_request_list_select(i).request  ;  
-
-                        
-                END IF;
                 
                 
             END LOOP;
@@ -1158,13 +1152,14 @@ BEGIN
 
     END IF;
 
-
+    
+    
     IF v_mesg_error IS NULL
     THEN
-        --v_request := SUBSTR (v_request,1,LENGTH (v_request) -1);
+        v_request := SUBSTR (v_request,1,LENGTH (v_request) -1);
         
         
-        IF p_step_type = 'REST'
+        /*IF p_step_type = 'REST'
             THEN
             
                 v_request := '{' || v_request || '};';
@@ -1174,20 +1169,20 @@ BEGIN
             
                 v_request := '(' || v_request || ');';
             
-            END IF;
-        
+            END IF;*/
+        v_request := '{' || v_request || '}';
     END IF;
   END IF;
   
     
     v_request_obj := NULL;
     v_request_obj := XX_FLA_COMMON_EXEC_REQ_O(v_request);
-
+    
 
     v_request_list.EXTEND;
     v_request_list(v_request_list.COUNT)  :=  v_request_obj;
 
-
+    DBMS_OUTPUT.put_line('Request->'||v_request);
   -- ---------------------------------------------------------------------------
   -- Verifica si se produjo un error.
   -- ---------------------------------------------------------------------------
@@ -1277,14 +1272,26 @@ IS
   
   v_request                 VARCHAR2(32767);
   v_statement               VARCHAR2(32767);
+  v_in_json_string          VARCHAR2(32767);
   v_request_value           VARCHAR2(2000);
   v_request_list            XX_FLA_COMMON_EXEC_REQS_T;
   v_request_list_select     XX_FLA_COMMON_EXEC_REQS_T;
   v_request_obj             XX_FLA_COMMON_EXEC_REQ_O;
-  v_json_result  CLOB;
+  --v_json_result  CLOB;
   v_stmt         VARCHAR2(1000);
   v_return_status           VARCHAR2(1);
-  
+  v_json         JSON_OBJECT_T;
+  v_keys         JSON_KEY_LIST;
+  --v_in_params    SYS.ODCIVARCHAR2LIST := SYS.ODCIVARCHAR2LIST();
+   v_in_json      JSON_OBJECT_T := JSON_OBJECT_T();
+  v_sql          VARCHAR2(4000);
+  -- Variables OUT (fijas)
+  v_json_result    VARCHAR2(32767);
+  --v_return_status  VARCHAR2(10);
+  v_msg_error      VARCHAR2(32767);
+  v_idx           INTEGER := 1;
+    v_req_trx_id              xx_fla_common_int_req_trx.req_trx_id%TYPE;
+
   --v_values
 
   -- ---------------------------------------------------------------------------
@@ -1397,7 +1404,7 @@ BEGIN
   THEN
 
 
-    FOR i IN p_request.FIRST .. p_request.LAST LOOP
+    /*FOR i IN p_request.FIRST .. p_request.LAST LOOP
 v_mesg_error:= '00';    
         BEGIN
         v_stmt := 'DECLARE ' ||
@@ -1412,12 +1419,85 @@ v_mesg_error:= '00';
 
 --v_mesg_error:= '01';
         
+    END LOOP;*/
+
+    FOR i IN p_request.FIRST .. p_request.LAST LOOP
+
+      v_json := JSON_OBJECT_T.parse(p_request(i).request);  -- json de entrada
+
+      v_keys := v_json.get_keys;
+
+      FOR j IN 1 .. v_keys.COUNT LOOP
+        DBMS_OUTPUT.put_line('Init5');
+        IF v_json.get_string(v_keys(j)) NOT IN ('x_json_result', 'x_return_status', 'x_msg_error') THEN
+          DBMS_OUTPUT.put_line('Init6.1'||v_keys(j));
+          DBMS_OUTPUT.put_line('Init6.2'||v_json.get_string(v_keys(j)));
+          v_in_json.put(v_keys(j), v_json.get(v_keys(j)));
+        END IF;
+        
+      END LOOP;
+        
+      v_in_json_string := v_in_json.to_string;
+        DBMS_OUTPUT.put_line('Init7.1->'||v_in_json_string);
+      -- Armar la cadena de llamada dinámica
+      BEGIN
+      v_sql := 'BEGIN ' || p_step_object || '(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;';
+      DBMS_OUTPUT.put_line('Init7->'||v_sql);
+        EXECUTE IMMEDIATE v_sql
+          USING IN p_request_id, IN p_draft_flag, IN p_debug_flag, IN p_language, IN p_user_name, IN v_in_json_string, OUT v_json_result, OUT v_return_status, OUT v_mesg_error;
+          DBMS_OUTPUT.put_line('Init8');
+      EXCEPTION 
+        WHEN OTHERS THEN
+          DBMS_OUTPUT.put_line('Error->'||SQLERRM);  
+      END;
+
+      -- Devuelve los OUT en el JSON
+      --v_json.put('x_json_result', v_json_result);
+      --v_json.put('x_return_status', v_return_status);
+      --v_json.put('x_msg_error', v_msg_error);
+
+
+    
+      v_json := JSON_OBJECT_T.parse(v_json_result);
+      v_keys := v_json.get_keys;
+
+      FOR j IN 1 .. v_keys.COUNT LOOP
+        DBMS_OUTPUT.put_line('Init5');
+        IF v_json.get_string(v_keys(j)) NOT IN ('x_json_result', 'x_return_status', 'x_msg_error') THEN
+          DBMS_OUTPUT.put_line('Init6.1'||v_keys(j));
+          DBMS_OUTPUT.put_line('Init6.2'||v_json.get_string(v_keys(j)));
+          v_in_json.put(v_keys(j), v_json.get(v_keys(j)));
+          
+            BEGIN
+                v_req_trx_id :=  xx_fla_common_pro_int_req_trx_s.NEXTVAL; 
+            EXCEPTION
+                WHEN OTHERS THEN
+                    v_req_trx_id := NULL;
+                    v_mesg_error := message('FLA_COMMON_REQ_TRX_SEQ',SQLERRM);
+            END;
+          
+                           insert_fla_common_int_req_trx(
+                                                p_user_name
+                                               ,v_req_trx_id
+                                               ,p_request_id
+                                               ,p_integration_code
+                                               ,p_step
+                                               ,1 --Iteración unica
+                                               ,TRIM(v_keys(j))
+                                               ,TRIM(v_json.get_string(v_keys(j)))
+                                               ,x_return_status
+                                               ,v_mesg_error
+                                               );
+        END IF;
+        
+      END LOOP;
+
     END LOOP;
+
+
 
   END IF;
 
-    x_return_status := 'E';
-    x_msg_error     := v_mesg_error;
   -- ---------------------------------------------------------------------------
   -- Verifica si se produjo un error.
   -- ---------------------------------------------------------------------------
@@ -1432,8 +1512,8 @@ v_mesg_error:= '00';
           );
     ELSE
       
-        --x_request := v_request_list;  
-       null; 
+        x_return_status := 'S';
+        x_msg_error     := v_mesg_error;
         
   END IF;
   -- ---------------------------------------------------------------------------
