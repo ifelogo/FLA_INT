@@ -55,16 +55,6 @@ PROCEDURE get_items_groups(p_request_id        IN     NUMBER
                           ,x_return_status     OUT    VARCHAR2
                           ,x_msg_error         OUT    VARCHAR2
                           );
-PROCEDURE wrap_create_update_items_json (
-    p_request_id       IN  NUMBER,
-    p_request_phase_id IN  NUMBER,
-    p_draft_flag       IN  VARCHAR2,
-    p_debug_flag       IN  VARCHAR2,
-    p_language         IN  VARCHAR2,
-    p_user_name        IN  VARCHAR2,
-    p_items            IN  XX_FLA_ITEMS_T,
-    p_json_result      OUT CLOB
-);
 
 
 /*=========================================================================+
@@ -136,6 +126,37 @@ PROCEDURE create_update_items(p_request_id       IN      NUMBER
                              );
 
 
+/*=========================================================================+
+|                                                                          |
+| Public Procedure                                                         |
+|    CREATE_UPDATE_ITEMS                                                   |
+|                                                                          |
+| Description                                                              |
+|    (descripcion del procedimiento)                                       |
+|                                                                          |
+| Parameters                                                               |
+|    p_request_id       IN      NUMBER   Nro. del requerimiento.           |
+|    p_request_phase_id IN      NUMBER   Nro. de requerimiento de la etapa.|
+|    p_draft_flag       IN      VARCHAR2 Modo borrador.                    |
+|    p_debug_flag       IN      VARCHAR2 Flag de debug.                    |
+|    p_language         IN      VARCHAR2 Codigo de lenguaje.               |
+|    p_user_name        IN      VARCHAR2 Usuario.                          |
+|    p_items            IN      XX_FLA_ITEMS_T Listado de items.           |
+|    x_items            OUT     XX_FLA_ITEMS_T Listado de items.           |
+|    x_return_status    OUT     VARCHAR2 Estado de ejecucion.              |
+|    x_msg_error        OUT     VARCHAR2 Mensaje de error.                 |
+|                                                                          |
++=========================================================================*/
+PROCEDURE wrap_create_update_items_json(p_request_id       IN      VARCHAR2
+                             ,p_draft_flag       IN      VARCHAR2
+                             ,p_debug_flag       IN      VARCHAR2
+                             ,p_language         IN      VARCHAR2
+                             ,p_user_name        IN      VARCHAR2
+                             ,p_json_in           IN  VARCHAR2
+                             ,x_json_result       OUT CLOB
+                             ,x_return_status     OUT     VARCHAR2
+                             ,x_msg_error         OUT     VARCHAR2
+                             );
 
 /*=========================================================================+
 |                                                                          |
@@ -194,8 +215,8 @@ PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
 |    (descripcion del procedimiento)                                       |
 |                                                                          |
 | Parameters                                                               |
-|    p_request_id       IN      NUMBER   Nro. del requerimiento.           |
-|    p_request_phase_id IN      NUMBER   Nro. de requerimiento de la etapa.|
+|    p_request_id       IN      VARCHAR2   Nro. del requerimiento.           |
+|    p_request_phase_id IN      VARCHAR2   Nro. de requerimiento de la etapa.|
 |    p_draft_flag       IN      VARCHAR2 Modo borrador.                    |
 |    p_debug_flag       IN      VARCHAR2 Flag de debug.                    |
 |    p_language         IN      VARCHAR2 Codigo de lenguaje.               |
@@ -206,8 +227,8 @@ PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
 |    x_msg_error        OUT     VARCHAR2 Mensaje de error.                 |
 |                                                                          |
 +=========================================================================*/
-PROCEDURE get_countries(p_request_id       IN      NUMBER
-                       ,p_request_phase_id IN      NUMBER
+PROCEDURE get_countries(p_request_id       IN      VARCHAR2
+                       ,p_request_phase_id IN      VARCHAR2
                        ,p_draft_flag       IN      VARCHAR2
                        ,p_debug_flag       IN      VARCHAR2
                        ,p_language         IN      VARCHAR2

@@ -1269,39 +1269,31 @@ IS
   v_calling_sequence        VARCHAR2(2000);
   v_mesg_error              VARCHAR2(32767);
   v_language                VARCHAR2(4);  
-  
-  v_request                 VARCHAR2(32767);
-  v_statement               VARCHAR2(32767);
   v_in_json_string          VARCHAR2(32767);
-  v_request_value           VARCHAR2(2000);
   v_request_list            XX_FLA_COMMON_EXEC_REQS_T;
   v_request_list_select     XX_FLA_COMMON_EXEC_REQS_T;
   v_request_obj             XX_FLA_COMMON_EXEC_REQ_O;
-  --v_json_result  CLOB;
-  v_stmt         VARCHAR2(1000);
+  v_stmt                    VARCHAR2(1000);
   v_return_status           VARCHAR2(1);
-  v_json         JSON_OBJECT_T;
-  v_keys         JSON_KEY_LIST;
-  --v_in_params    SYS.ODCIVARCHAR2LIST := SYS.ODCIVARCHAR2LIST();
-   v_in_json      JSON_OBJECT_T := JSON_OBJECT_T();
-  v_sql          VARCHAR2(4000);
-  -- Variables OUT (fijas)
-  v_json_result    VARCHAR2(32767);
-  --v_return_status  VARCHAR2(10);
-  v_msg_error      VARCHAR2(32767);
-  v_idx           INTEGER := 1;
-    v_req_trx_id              xx_fla_common_int_req_trx.req_trx_id%TYPE;
-
-  --v_values
+  v_json                    JSON_OBJECT_T;
+  v_keys                    JSON_KEY_LIST;
+  v_in_json                 JSON_OBJECT_T := JSON_OBJECT_T();
+  v_sql                     VARCHAR2(4000);
+  v_json_result             CLOB;
+  v_msg_error               VARCHAR2(32767);
+  v_req_trx_id              xx_fla_common_int_req_trx.req_trx_id%TYPE;
+  
+  -- ---------------------------------------------------------------------------
+  -- Variables de respuesta de la API.
+  -- ---------------------------------------------------------------------------  
+  v_li_arr_response         JSON_ARRAY_T;
+  v_li_obj_response         JSON_OBJECT_T;
+  v_keys_response           json_key_list;
 
   -- ---------------------------------------------------------------------------
   -- Declaracion de Cursores.
   -- ---------------------------------------------------------------------------
-  -- ---------------------------------------------------------------------------
-  -- Cursor de c_next_step.
-  -- ---------------------------------------------------------------------------
 
-  
 
     
 BEGIN
@@ -1404,93 +1396,104 @@ BEGIN
   THEN
 
 
-    /*FOR i IN p_request.FIRST .. p_request.LAST LOOP
-v_mesg_error:= '00';    
-        BEGIN
-        v_stmt := 'DECLARE ' ||
-    'x_json_result CLOB; '||
-    'x_return_status     VARCHAR2(1); '||
-    'x_msg_error     VARCHAR2(2000);BEGIN ' || p_step_object || p_request(i).request || ' END;';
-        EXECUTE IMMEDIATE v_stmt USING OUT v_json_result, OUT x_return_status, OUT x_msg_error;
-            EXCEPTION
-                WHEN OTHERS THEN
-                    v_mesg_error := v_stmt||'->' ||SQLERRM;
-        END;
-
---v_mesg_error:= '01';
-        
-    END LOOP;*/
 
     FOR i IN p_request.FIRST .. p_request.LAST LOOP
 
-      v_json := JSON_OBJECT_T.parse(p_request(i).request);  -- json de entrada
+      v_json := JSON_OBJECT_T.parse(p_request(i).request); 
 
       v_keys := v_json.get_keys;
 
       FOR j IN 1 .. v_keys.COUNT LOOP
-        DBMS_OUTPUT.put_line('Init5');
+        
         IF v_json.get_string(v_keys(j)) NOT IN ('x_json_result', 'x_return_status', 'x_msg_error') THEN
-          DBMS_OUTPUT.put_line('Init6.1'||v_keys(j));
-          DBMS_OUTPUT.put_line('Init6.2'||v_json.get_string(v_keys(j)));
+
           v_in_json.put(v_keys(j), v_json.get(v_keys(j)));
+
         END IF;
         
       END LOOP;
         
       v_in_json_string := v_in_json.to_string;
-        DBMS_OUTPUT.put_line('Init7.1->'||v_in_json_string);
-      -- Armar la cadena de llamada dinámica
+
+      -- ---------------------------------------------------------------------------
+      -- Construye llamada dinamica
+      -- ---------------------------------------------------------------------------
       BEGIN
       v_sql := 'BEGIN ' || p_step_object || '(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;';
-      DBMS_OUTPUT.put_line('Init7->'||v_sql);
+
         EXECUTE IMMEDIATE v_sql
           USING IN p_request_id, IN p_draft_flag, IN p_debug_flag, IN p_language, IN p_user_name, IN v_in_json_string, OUT v_json_result, OUT v_return_status, OUT v_mesg_error;
-          DBMS_OUTPUT.put_line('Init8');
+
       EXCEPTION 
         WHEN OTHERS THEN
           DBMS_OUTPUT.put_line('Error->'||SQLERRM);  
+          v_mesg_error := message('FLA_COMMON_EXEC',p_step_object||g_msg_del||SQLERRM);
       END;
 
-      -- Devuelve los OUT en el JSON
-      --v_json.put('x_json_result', v_json_result);
-      --v_json.put('x_return_status', v_return_status);
-      --v_json.put('x_msg_error', v_msg_error);
+      IF v_mesg_error IS NULL 
+        AND v_json_result IS NOT NULL 
+      THEN
 
+          -- ---------------------------------------------------------------------------
+          -- Procesa respuesta.
+          -- ---------------------------------------------------------------------------    
+          v_json := JSON_OBJECT_T.parse(v_json_result);
+          
+          v_keys := v_json.get_keys;
+            DBMS_OUTPUT.put_line('InitJsonCompleto->'||v_json.to_string);
+          FOR j IN 1 .. v_keys.COUNT LOOP
+            DBMS_OUTPUT.put_line('Init5->'||v_keys(j));
+            DBMS_OUTPUT.put_line('Init5->'||v_json.get_string(v_keys(j)));
+            
+            v_li_arr_response := v_json.get_Array('x_items');
+            
+            FOR k IN 0 .. v_li_arr_response.get_size - 1 LOOP
+            
+                v_li_obj_response := JSON_OBJECT_T(v_li_arr_response.get(k));
+                
+                v_keys_response := v_li_obj_response.get_keys;
+                
+                FOR i IN 1 .. v_keys_response.COUNT LOOP
+                    dbms_output.put_line('InitInLoop.keys->'||v_keys_response(i));
+                    dbms_output.put_line('InitInLoop.values->'||v_li_obj_response.get(v_keys_response(i)).to_string);
+                    
+                    BEGIN
+                        v_req_trx_id :=  xx_fla_common_pro_int_req_trx_s.NEXTVAL; 
+                        EXCEPTION
+                            WHEN OTHERS THEN
+                                v_req_trx_id := NULL;
+                                v_mesg_error := message('FLA_COMMON_REQ_TRX_SEQ',SQLERRM);
+                                RETURN;
+                    END;
+              
+                    
+                    IF v_mesg_error IS NOT NULL
+                    THEN
 
+                               insert_fla_common_int_req_trx(
+                                                               p_user_name
+                                                              ,v_req_trx_id
+                                                              ,p_request_id
+                                                              ,p_integration_code
+                                                              ,p_step
+                                                              ,k --Iteración unica
+                                                              ,TRIM(v_keys_response(i))
+                                                              ,TRIM(v_li_obj_response.get(v_keys_response(i)).to_string)
+                                                              ,x_return_status
+                                                              ,v_mesg_error
+                                                              );
+
+                    END IF;
+                END LOOP;
     
-      v_json := JSON_OBJECT_T.parse(v_json_result);
-      v_keys := v_json.get_keys;
-
-      FOR j IN 1 .. v_keys.COUNT LOOP
-        DBMS_OUTPUT.put_line('Init5');
-        IF v_json.get_string(v_keys(j)) NOT IN ('x_json_result', 'x_return_status', 'x_msg_error') THEN
-          DBMS_OUTPUT.put_line('Init6.1'||v_keys(j));
-          DBMS_OUTPUT.put_line('Init6.2'||v_json.get_string(v_keys(j)));
-          v_in_json.put(v_keys(j), v_json.get(v_keys(j)));
-          
-            BEGIN
-                v_req_trx_id :=  xx_fla_common_pro_int_req_trx_s.NEXTVAL; 
-            EXCEPTION
-                WHEN OTHERS THEN
-                    v_req_trx_id := NULL;
-                    v_mesg_error := message('FLA_COMMON_REQ_TRX_SEQ',SQLERRM);
-            END;
-          
-                           insert_fla_common_int_req_trx(
-                                                p_user_name
-                                               ,v_req_trx_id
-                                               ,p_request_id
-                                               ,p_integration_code
-                                               ,p_step
-                                               ,1 --Iteración unica
-                                               ,TRIM(v_keys(j))
-                                               ,TRIM(v_json.get_string(v_keys(j)))
-                                               ,x_return_status
-                                               ,v_mesg_error
-                                               );
-        END IF;
-        
-      END LOOP;
+                DBMS_OUTPUT.put_line('InitInLoop->'||v_li_obj_response.to_string);    
+    
+              END LOOP;
+    
+          END LOOP;
+      
+      
+      END IF;
 
     END LOOP;
 

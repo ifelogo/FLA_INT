@@ -1642,8 +1642,8 @@ END get_indexes;
 |    (descripcion del procedimiento)                                       |
 |                                                                          |
 | Parameters                                                               |
-|    p_request_id       IN      NUMBER   Nro. del requerimiento.           |
-|    p_request_phase_id IN      NUMBER   Nro. de requerimiento de la etapa.|
+|    p_request_id       IN      VARCHAR2 Nro. del requerimiento.           |
+|    p_request_phase_id IN      VARCHAR2 Nro. de requerimiento de la etapa.|
 |    p_draft_flag       IN      VARCHAR2 Modo borrador.                    |
 |    p_debug_flag       IN      VARCHAR2 Flag de debug.                    |
 |    p_language         IN      VARCHAR2 Codigo de lenguaje.               |
@@ -1654,8 +1654,8 @@ END get_indexes;
 |    x_msg_error        OUT     VARCHAR2 Mensaje de error.                 |
 |                                                                          |
 +=========================================================================*/
-PROCEDURE get_countries(p_request_id       IN      NUMBER
-                       ,p_request_phase_id IN      NUMBER
+PROCEDURE get_countries(p_request_id       IN      VARCHAR2
+                       ,p_request_phase_id IN      VARCHAR2
                        ,p_draft_flag       IN      VARCHAR2
                        ,p_debug_flag       IN      VARCHAR2
                        ,p_language         IN      VARCHAR2
@@ -1718,7 +1718,7 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- Inicializa datos globales.
   -- ---------------------------------------------------------------------------
-  IF v_mesg_error IS NULL THEN
+  /*IF v_mesg_error IS NULL THEN
      BEGIN
        xx_global_pkg.initialize
          (p_user_name        => p_user_name
@@ -1731,7 +1731,7 @@ BEGIN
        WHEN others THEN
          v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
      END;
-  END IF;
+  END IF;*/
   -- ---------------------------------------------------------------------------
   -- Despliega parametros.
   -- ---------------------------------------------------------------------------
@@ -1804,9 +1804,8 @@ BEGIN
           ,'1'
           );
   END IF;
-         
 
-  FOR r_country IN c_countries(p_country_code, v_language) LOOP
+  FOR r_country IN c_countries(p_country_code, NVL(v_language,p_language)) LOOP
   
       IF v_mesg_error  IS NULL 
       THEN
@@ -1829,6 +1828,8 @@ BEGIN
         v_items(v_items.COUNT)  :=  v_item;      
   
   END LOOP;
+  
+
 
   -- ---------------------------------------------------------------------------
   -- Verifica si se produjo un error.
@@ -1845,8 +1846,11 @@ BEGIN
     ELSE
       
         x_items := v_items;  
-        
+
+      
   END IF;
+
+
   -- ---------------------------------------------------------------------------
   -- Fin del proceso.
   -- ---------------------------------------------------------------------------
@@ -1899,9 +1903,9 @@ PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
   
 BEGIN
   
-
+  v_countries            := XX_FLA_COUNTRIES_T();
   v_json := JSON_OBJECT_T.parse(p_json_in); 
-DBMS_OUTPUT.put_line('wrap_get_countries_json1->');
+DBMS_OUTPUT.put_line('wrap_get_countries_json1.1->');
 DBMS_OUTPUT.put_line('wrap_get_countries_json->' ||v_json.get_string('p_draft_mode'));
 DBMS_OUTPUT.put_line('wrap_get_countries_json->' ||v_json.get_string('p_country_code'));
   
@@ -1919,29 +1923,42 @@ DBMS_OUTPUT.put_line('wrap_get_countries_json->' ||v_json.get_string('p_country_
         x_msg_error        => v_msg_error
     );
 
-    IF v_countries IS NOT NULL THEN
-        FOR i IN 1 .. v_countries.COUNT LOOP
+DBMS_OUTPUT.put_line('wrap_get_countries_json->After PL'||v_msg_error);
+DBMS_OUTPUT.put_line('wrap_get_countries_json->v_return_status'||v_return_status);
+DBMS_OUTPUT.put_line('Count->'||v_countries.count);
+    IF v_countries IS NOT NULL 
+       AND v_countries.COUNT > 0 
+    THEN
+    DBMS_OUTPUT.put_line('is not nuLL');
+    DBMS_OUTPUT.put_line('is not nuLL->'||v_countries.count);
+        FOR i IN v_countries.FIRST .. v_countries.LAST LOOP
+        DBMS_OUTPUT.put_line('is not nuLL1');
             v_country_obj := JSON_OBJECT_T();
             v_country_obj.put('territory_short_name', v_countries(i).territory_short_name);
             v_country_obj.put('territory_num',  v_countries(i).territory_num);
             -- Agrega aquí los demás campos de XX_FLA_COUNTRY_O si existen
             v_json_arr.append(v_country_obj);
+            DBMS_OUTPUT.put_line('is not nuLL2');
         END LOOP;
     END IF;
 
     v_json_obj := JSON_OBJECT_T();
-    v_json_obj.put('x_return_status', v_return_status);
-    v_json_obj.put('x_msg_error',     v_msg_error);
+    --v_json_obj.put('x_return_status', v_return_status);
+    --v_json_obj.put('x_msg_error',     v_msg_error);
+
     v_json_obj.put('x_items',         v_json_arr);
 
+
     x_json_result := v_json_obj.to_clob;
+
     x_return_status:='S';
     x_msg_error:=NULL;
     --x_json_result := '{"x_return_status":"E","x_msg_error":"' ||'falta nivel' ||  '"}';
 EXCEPTION
     WHEN OTHERS THEN
+        DBMS_OUTPUT.put_line('Excepion.wrap_get_countries_json->4'||SQLERRM);
         x_json_result := '{"x_return_status":"E","x_msg_error":"' || REPLACE('falta niveles' || SQLERRM, '"', '\"') || '"}';
-END;
+END wrap_get_countries_json;
 
 
 /*=========================================================================+
@@ -2253,60 +2270,7 @@ EXCEPTION
 
 END get_sales_countries;
 
-PROCEDURE wrap_create_update_items_json (
-    p_request_id       IN  NUMBER,
-    p_request_phase_id IN  NUMBER,
-    p_draft_flag       IN  VARCHAR2,
-    p_debug_flag       IN  VARCHAR2,
-    p_language         IN  VARCHAR2,
-    p_user_name        IN  VARCHAR2,
-    p_items            IN  XX_FLA_ITEMS_T,
-    p_json_result      OUT CLOB
-) IS
-    l_x_items         XX_FLA_ITEMS_T;
-    l_x_return_status VARCHAR2(10);
-    l_x_msg_error     VARCHAR2(4000);
-    l_json_obj        JSON_OBJECT_T;
-    l_json_arr        JSON_ARRAY_T := JSON_ARRAY_T();
-    l_item_obj        JSON_OBJECT_T;
-BEGIN
-    create_update_items(
-        p_request_id       => p_request_id,
-        p_request_phase_id => p_request_phase_id,
-        p_draft_flag       => p_draft_flag,
-        p_debug_flag       => p_debug_flag,
-        p_language         => p_language,
-        p_user_name        => p_user_name,
-        p_items            => p_items,
-        x_items            => l_x_items,
-        x_return_status    => l_x_return_status,
-        x_msg_error        => l_x_msg_error
-    );
 
-    IF l_x_items IS NOT NULL THEN
-        FOR i IN 1 .. l_x_items.COUNT LOOP
-            l_item_obj := JSON_OBJECT_T();
-            l_item_obj.put('item_id',      l_x_items(i).item_id);
-            l_item_obj.put('country_code', l_x_items(i).country_code);
-            l_item_obj.put('item_code',    l_x_items(i).item_code);
-            l_item_obj.put('description',  l_x_items(i).description);
-            l_item_obj.put('enabled_flag', l_x_items(i).enabled_flag);
-            l_item_obj.put('request_id',   l_x_items(i).request_id);
-            l_json_arr.append(l_item_obj);
-        END LOOP;
-    END IF;
-
-    l_json_obj := JSON_OBJECT_T();
-    l_json_obj.put('x_return_status', l_x_return_status);
-    l_json_obj.put('x_msg_error',     l_x_msg_error);
-    l_json_obj.put('x_items',         l_json_arr);
-
-    p_json_result := l_json_obj.to_clob;
-
-EXCEPTION
-    WHEN OTHERS THEN
-        p_json_result := '{"x_return_status":"E","x_msg_error":"' || REPLACE(SQLERRM, '"', '\"') || '"}';
-END;
 /*=========================================================================+
 |                                                                          |
 | Public Procedure                                                         |
@@ -2683,7 +2647,95 @@ EXCEPTION
 END create_update_items;
 
 
+PROCEDURE wrap_create_update_items_json (
+    p_request_id       IN  VARCHAR2,
+    p_draft_flag       IN  VARCHAR2,
+    p_debug_flag       IN  VARCHAR2,
+    p_language         IN  VARCHAR2,
+    p_user_name        IN  VARCHAR2
+   ,p_json_in           IN  VARCHAR2
+                             ,x_json_result       OUT CLOB
+                             ,x_return_status     OUT     VARCHAR2
+                             ,x_msg_error         OUT     VARCHAR2
+                             )IS
+    x_items         XX_FLA_ITEMS_T;
+    v_items           XX_FLA_ITEMS_T;
+    v_items_in           XX_FLA_ITEMS_T;
+    v_item_obj    JSON_OBJECT_T;
 
+    v_json_obj        JSON_OBJECT_T;
+    
+    v_json_arr        JSON_ARRAY_T := JSON_ARRAY_T();
+    
+      v_json         JSON_OBJECT_T;
+      v_keys         JSON_KEY_LIST;
+      v_in_json      JSON_OBJECT_T := JSON_OBJECT_T();
+      v_return_status VARCHAR2(1);
+      v_msg_error VARCHAR2(2000);
+  
+BEGIN
+    
+  v_items_in := XX_FLA_ITEMS_T();  
+  v_json := JSON_OBJECT_T.parse(p_json_in); 
+  v_items_in.EXTEND;
+  v_items_in(v_items_in.COUNT):= XX_FLA_ITEM_O(NULL
+                                        ,v_json.get_string('country_code')
+                                        ,v_json.get_string('item_code')
+                                        ,v_json.get_string('description')
+                                        ,v_json.get_string('enabled_flag')
+                                        ,NULL);
+
+ 
+    create_update_items(
+        p_request_id       => p_request_id,
+        p_request_phase_id => null,
+        p_draft_flag       => p_draft_flag,
+        p_debug_flag       => p_debug_flag,
+        p_language         => p_language,
+        p_user_name        => p_user_name,
+        p_items            => v_items_in,
+        x_items            => v_items,
+        x_return_status    => v_return_status,
+        x_msg_error        => v_msg_error
+    );
+
+DBMS_OUTPUT.put_line('wrap_get_countries_json->After PL'||v_msg_error);
+DBMS_OUTPUT.put_line('wrap_get_countries_json->v_return_status'||v_return_status);
+DBMS_OUTPUT.put_line('Count->'||v_items.count);
+    IF v_items IS NOT NULL 
+       AND v_items.COUNT > 0 
+    THEN
+    DBMS_OUTPUT.put_line('is not nuLL');
+    DBMS_OUTPUT.put_line('is not nuLL->'||v_items.count);
+        FOR i IN v_items.FIRST .. v_items.LAST LOOP
+        DBMS_OUTPUT.put_line('is not nuLL1');
+            v_item_obj := JSON_OBJECT_T();
+            v_item_obj.put('country_code', v_items(i).country_code);
+            v_item_obj.put('description',  v_items(i).description);
+            -- Agrega aquí los demás campos de XX_FLA_COUNTRY_O si existen
+            v_json_arr.append(v_item_obj);
+            DBMS_OUTPUT.put_line('is not nuLL2');
+        END LOOP;
+    END IF;
+
+    v_json_obj := JSON_OBJECT_T();
+    --v_json_obj.put('x_return_status', v_return_status);
+    --v_json_obj.put('x_msg_error',     v_msg_error);
+
+    v_json_obj.put('x_items',         v_json_arr);
+
+
+    x_json_result := v_json_obj.to_clob;
+
+    x_return_status:='S';
+    x_msg_error:=NULL;    
+    
+
+
+EXCEPTION
+    WHEN OTHERS THEN
+        x_json_result := '{"x_return_status":"E","x_msg_error":"' || REPLACE(SQLERRM, '"', '\"') || '"}';
+END wrap_create_update_items_json;
 
 /*=========================================================================+
 |                                                                          |
