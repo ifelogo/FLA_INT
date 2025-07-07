@@ -43,6 +43,7 @@ CREATE TABLE xx_fla_common_int_steps (
 ,step_type          VARCHAR2(40)    -- REST / PL/SQL / FILE / MAIL
 ,step_object        VARCHAR2(2000)
 ,msg_type           VARCHAR2(20) --QUERY / PAYLOAD 
+,root_item          VARCHAR2(100) 
 ,enabled_flag       VARCHAR2(1)
 ,creation_date      DATE
 ,created_by         VARCHAR2(256)

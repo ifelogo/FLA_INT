@@ -1885,8 +1885,8 @@ PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
                                    ,p_debug_flag        IN      VARCHAR2
                                    ,p_language          IN      VARCHAR2
                                    ,p_user_name         IN      VARCHAR2
-                                   ,p_json_in           IN  VARCHAR2
-                                   ,x_json_result       OUT CLOB
+                                   ,p_json_in           IN      VARCHAR2
+                                   ,x_json_result       OUT     CLOB
                                    ,x_return_status     OUT     VARCHAR2
                                    ,x_msg_error         OUT     VARCHAR2
                                     ) IS
@@ -1902,22 +1902,22 @@ PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
       v_in_json      JSON_OBJECT_T := JSON_OBJECT_T();
   
 BEGIN
-  
+DBMS_OUTPUT.put_line('wrap_get_countries_json1.1->');  
   v_countries            := XX_FLA_COUNTRIES_T();
   v_json := JSON_OBJECT_T.parse(p_json_in); 
-DBMS_OUTPUT.put_line('wrap_get_countries_json1.1->');
-DBMS_OUTPUT.put_line('wrap_get_countries_json->' ||v_json.get_string('p_draft_mode'));
-DBMS_OUTPUT.put_line('wrap_get_countries_json->' ||v_json.get_string('p_country_code'));
+
+DBMS_OUTPUT.put_line('param1->' ||v_json.get_string('param1'));
+DBMS_OUTPUT.put_line('param2->' ||v_json.get_string('param2'));
   
 --v_jo.get_string(v_keys(i))
     get_countries(
         p_request_id       => p_request_id,
         p_request_phase_id => NULL,
-        p_draft_flag       => v_json.get_string('p_draft_mode'),
+        p_draft_flag       => REPLACE(v_json.get_string('param1'),'''',''),
         p_debug_flag       => p_debug_flag,
         p_language         => p_language,
         p_user_name        => p_user_name,
-        p_country_code     => v_json.get_string('p_country_code'),
+        p_country_code     => REPLACE(v_json.get_string('param2'),'''',''),
         x_items            => v_countries,
         x_return_status    => v_return_status,
         x_msg_error        => v_msg_error

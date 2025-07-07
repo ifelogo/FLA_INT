@@ -44,6 +44,8 @@ CREATE OR REPLACE TYPE xx_fla_common_int_step_o AS OBJECT
 ,step		    NUMBER
 ,step_type          VARCHAR2(40)    -- REST / PL/SQL / FILE / MAIL
 ,step_object        VARCHAR2(2000)
+,msg_type	    VARCHAR2(20) --QUERY
+,root_item	    VARCHAR2(100)
 )
 ;
 /
