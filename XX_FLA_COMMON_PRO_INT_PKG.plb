@@ -1939,17 +1939,22 @@ PROCEDURE write_json_response(p_request_id            IN      VARCHAR2
 IS
   v_calling_sequence        VARCHAR2(2000);
   v_mesg_error              VARCHAR2(32767);
-  v_language                VARCHAR2(4);  
-  v_in_json_string          VARCHAR2(32767);
+  v_language                VARCHAR2(4); 
+  
+  v_columns_select          VARCHAR2(32767);
+  v_columns                 VARCHAR2(32767);
+  v_sql                     VARCHAR2(32767);
+  
+
   v_request_list            XX_FLA_COMMON_EXEC_REQS_T;
   v_request_list_select     XX_FLA_COMMON_EXEC_REQS_T;
   v_request_obj             XX_FLA_COMMON_EXEC_REQ_O;
-  v_stmt                    VARCHAR2(1000);
+
   v_return_status           VARCHAR2(1);
   v_json                    JSON_OBJECT_T;
   v_keys                    JSON_KEY_LIST;
   v_in_json                 JSON_OBJECT_T := JSON_OBJECT_T();
-  v_sql                     VARCHAR2(4000);
+
   v_json_result             CLOB;
   v_msg_error               VARCHAR2(32767);
   v_req_trx_id              xx_fla_common_int_req_trx.req_trx_id%TYPE;
@@ -1964,7 +1969,18 @@ IS
   -- ---------------------------------------------------------------------------
   -- Declaracion de Cursores.
   -- ---------------------------------------------------------------------------
-
+  CURSOR c_columns( p_integration_code  VARCHAR2
+                   ,p_step              NUMBER 
+                   ,p_root_item         VARCHAR2
+                   ,p_step_object       VARCHAR2) IS
+  SELECT xfcirc.column_name
+  FROM xx_fla_common_int_rest_columns xfcirc
+  WHERE 1 = 1
+  AND xfcirc.integration_code   = p_integration_code
+  AND xfcirc.step               = p_step
+  AND xfcirc.root_item          = p_root_item
+  AND xfcirc.step_object        = p_step_object
+  AND xfcirc.enabled_flag       = 'Y';
 
     
 BEGIN
@@ -2066,6 +2082,41 @@ BEGIN
   IF v_mesg_error  IS NULL 
     AND p_json_response IS NOT NULL
   THEN
+  
+    FOR r_columns IN c_columns(p_integration_code, p_step, p_root_item, p_step_object) LOOP
+        
+        v_columns_select := v_columns_select || 'jt.'|| r_columns.column_name || ',';
+        v_columns        := v_columns || r_columns.column_name || ' VARCHAR2(4000) PATH ''$.' || r_columns.column_name ||''',';
+        
+        
+    END LOOP;
+  
+        v_columns_select := SUBSTR (v_columns_select,1,LENGTH (v_columns_select) -1);
+        v_columns        := SUBSTR (v_columns,1,LENGTH (v_columns) -1);
+        
+  END IF;
+  
+  IF v_mesg_error           IS NULL 
+    AND v_columns_select    IS NOT NULL 
+    AND v_columns           IS NOT NULL 
+  THEN
+  
+    v_sql := 
+        'SELECT '   || v_columns_select || 
+        ' FROM json_table('||
+        '    :1,'||
+        '    ''$'''||
+        '    COLUMNS ( ' || v_columns ||
+        '    )'||
+        ') jt';
+  END IF;
+  
+  v_mesg_error := v_sql;
+  
+/* Logica menor a json de 32 kb  
+  IF v_mesg_error  IS NULL 
+    AND p_json_response IS NOT NULL
+  THEN
 
 
       -- ---------------------------------------------------------------------------
@@ -2131,7 +2182,7 @@ dbms_output.put_line('INSERT->'||v_keys_response(i));
 
 
   END IF;
-
+*/
   -- ---------------------------------------------------------------------------
   -- Verifica si se produjo un error.
   -- ---------------------------------------------------------------------------
