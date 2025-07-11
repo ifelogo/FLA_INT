@@ -1885,7 +1885,7 @@ PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
                                    ,p_debug_flag        IN      VARCHAR2
                                    ,p_language          IN      VARCHAR2
                                    ,p_user_name         IN      VARCHAR2
-                                   ,p_json_in           IN      VARCHAR2
+                                   ,p_json_in           IN      CLOB
                                    ,x_json_result       OUT     CLOB
                                    ,x_return_status     OUT     VARCHAR2
                                    ,x_msg_error         OUT     VARCHAR2
@@ -1896,28 +1896,37 @@ PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
     v_json_obj       JSON_OBJECT_T;
     v_json_arr       JSON_ARRAY_T := JSON_ARRAY_T();
     v_country_obj    JSON_OBJECT_T;
-    
-      v_json         JSON_OBJECT_T;
+    v_in_arr         JSON_ARRAY_T;
+    v_out_arr        JSON_ARRAY_T := JSON_ARRAY_T();
+     -- v_json         JSON_OBJECT_T;
       v_keys         JSON_KEY_LIST;
       v_in_json      JSON_OBJECT_T := JSON_OBJECT_T();
+          v_req_obj        JSON_OBJECT_T;
   
 BEGIN
 DBMS_OUTPUT.put_line('wrap_get_countries_json1.1->');  
   v_countries            := XX_FLA_COUNTRIES_T();
-  v_json := JSON_OBJECT_T.parse(p_json_in); 
+  --v_json := JSON_OBJECT_T.parse(p_json_in); 
+DBMS_OUTPUT.put_line('wrap_get_countries_json1.2->');  
 
-DBMS_OUTPUT.put_line('param1->' ||v_json.get_string('param1'));
-DBMS_OUTPUT.put_line('param2->' ||v_json.get_string('param2'));
-  
+    v_in_arr := JSON_ARRAY_T.parse(p_json_in); 
+DBMS_OUTPUT.put_line('wrap_get_countries_json1.3->');  
+    FOR i IN 0 .. v_in_arr.get_size - 1 LOOP
+        v_req_obj := JSON_OBJECT_T(v_in_arr.get(i)); -- Obtener el objeto individual
+
+
+        DBMS_OUTPUT.put_line('param1->' || v_req_obj.get_string('param1'));
+        DBMS_OUTPUT.put_line('param2->' || v_req_obj.get_string('param2'));
+  v_countries := XX_FLA_COUNTRIES_T();
 --v_jo.get_string(v_keys(i))
     get_countries(
         p_request_id       => p_request_id,
         p_request_phase_id => NULL,
-        p_draft_flag       => REPLACE(v_json.get_string('param1'),'''',''),
+        p_draft_flag       => REPLACE(v_req_obj.get_string('param1'),'''',''),
         p_debug_flag       => p_debug_flag,
         p_language         => p_language,
         p_user_name        => p_user_name,
-        p_country_code     => REPLACE(v_json.get_string('param2'),'''',''),
+        p_country_code     => REPLACE(v_req_obj.get_string('param2'),'''',''),
         x_items            => v_countries,
         x_return_status    => v_return_status,
         x_msg_error        => v_msg_error
@@ -1934,14 +1943,14 @@ DBMS_OUTPUT.put_line('Count->'||v_countries.count);
         FOR i IN v_countries.FIRST .. v_countries.LAST LOOP
         DBMS_OUTPUT.put_line('is not nuLL1');
             v_country_obj := JSON_OBJECT_T();
-            v_country_obj.put('territory_short_name', v_countries(i).territory_short_name);
-            v_country_obj.put('territory_num',  v_countries(i).territory_num);
+            v_country_obj.put('territory_short_name', REPLACE(v_countries(i).territory_short_name,'"',''));
+            v_country_obj.put('territory_num',  REPLACE(v_countries(i).territory_num,'"',''));
             -- Agrega aquí los demás campos de XX_FLA_COUNTRY_O si existen
             v_json_arr.append(v_country_obj);
             DBMS_OUTPUT.put_line('is not nuLL2');
         END LOOP;
     END IF;
-
+    END LOOP;
     v_json_obj := JSON_OBJECT_T();
     --v_json_obj.put('x_return_status', v_return_status);
     --v_json_obj.put('x_msg_error',     v_msg_error);
@@ -2280,8 +2289,7 @@ END get_sales_countries;
 |    (descripcion del procedimiento)                                       |
 |                                                                          |
 | Parameters                                                               |
-|    p_request_id       IN      NUMBER   Nro. del requerimiento.           |
-|    p_request_phase_id IN      NUMBER   Nro. de requerimiento de la etapa.|
+|    p_request_id       IN      VARCHAR2   Nro. del requerimiento.         |
 |    p_draft_flag       IN      VARCHAR2 Modo borrador.                    |
 |    p_debug_flag       IN      VARCHAR2 Flag de debug.                    |
 |    p_language         IN      VARCHAR2 Codigo de lenguaje.               |
@@ -2292,8 +2300,7 @@ END get_sales_countries;
 |    x_msg_error        OUT     VARCHAR2 Mensaje de error.                 |
 |                                                                          |
 +=========================================================================*/
-PROCEDURE create_update_items(p_request_id       IN      NUMBER
-                             ,p_request_phase_id IN      NUMBER
+PROCEDURE create_update_items(p_request_id       IN      VARCHAR2
                              ,p_draft_flag       IN      VARCHAR2
                              ,p_debug_flag       IN      VARCHAR2
                              ,p_language         IN      VARCHAR2
@@ -2323,20 +2330,20 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- Inicializa datos globales.
   -- ---------------------------------------------------------------------------
-  IF v_mesg_error IS NULL THEN
+  /*IF v_mesg_error IS NULL THEN
      BEGIN
        xx_global_pkg.initialize
          (p_user_name        => p_user_name
          ,p_language         => p_language
          ,p_request_id       => p_request_id
-         ,p_request_phase_id => p_request_phase_id
+         ,p_request_phase_id => NULL
          );
        g_debug_flag := xx_debug_pkg.g_enabled;
      EXCEPTION
        WHEN others THEN
          v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
      END;
-  END IF;
+  END IF;*/
   -- ---------------------------------------------------------------------------
   -- Despliega parametros.
   -- ---------------------------------------------------------------------------
@@ -2351,12 +2358,7 @@ BEGIN
         TO_CHAR(p_request_id)
        ,'1'
        );
-  debug(g_indent                                ||
-        v_calling_sequence                      ||
-        '. Nro. de requerimiento de la etapa: ' ||
-        TO_CHAR(p_request_phase_id)
-       ,'1'
-       );
+
   debug(g_indent            ||
         v_calling_sequence  ||
         '. Modo borrador: ' ||
@@ -2679,16 +2681,15 @@ BEGIN
   v_json := JSON_OBJECT_T.parse(p_json_in); 
   v_items_in.EXTEND;
   v_items_in(v_items_in.COUNT):= XX_FLA_ITEM_O(NULL
-                                        ,v_json.get_string('country_code')
-                                        ,v_json.get_string('item_code')
-                                        ,v_json.get_string('description')
-                                        ,v_json.get_string('enabled_flag')
+                                        ,v_json.get_string('param1') --country_code
+                                        ,v_json.get_string('param2') --item_code
+                                        ,v_json.get_string('param3') --description
+                                        ,v_json.get_string('param4') --enabled_flag
                                         ,NULL);
 
  
     create_update_items(
         p_request_id       => p_request_id,
-        p_request_phase_id => null,
         p_draft_flag       => p_draft_flag,
         p_debug_flag       => p_debug_flag,
         p_language         => p_language,
@@ -2711,7 +2712,10 @@ DBMS_OUTPUT.put_line('Count->'||v_items.count);
         DBMS_OUTPUT.put_line('is not nuLL1');
             v_item_obj := JSON_OBJECT_T();
             v_item_obj.put('country_code', v_items(i).country_code);
+            v_item_obj.put('item_code',  v_items(i).item_code);
             v_item_obj.put('description',  v_items(i).description);
+            v_item_obj.put('enabled_flag',  v_items(i).enabled_flag);
+            v_item_obj.put('request_id',  v_items(i).request_id);
             -- Agrega aquí los demás campos de XX_FLA_COUNTRY_O si existen
             v_json_arr.append(v_item_obj);
             DBMS_OUTPUT.put_line('is not nuLL2');

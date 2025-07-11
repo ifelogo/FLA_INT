@@ -101,8 +101,7 @@ PROCEDURE create_update_item_prices(p_request_id       IN      NUMBER
 |    (descripcion del procedimiento)                                       |
 |                                                                          |
 | Parameters                                                               |
-|    p_request_id       IN      NUMBER   Nro. del requerimiento.           |
-|    p_request_phase_id IN      NUMBER   Nro. de requerimiento de la etapa.|
+|    p_request_id       IN      VARCHAR2   Nro. del requerimiento.         |
 |    p_draft_flag       IN      VARCHAR2 Modo borrador.                    |
 |    p_debug_flag       IN      VARCHAR2 Flag de debug.                    |
 |    p_language         IN      VARCHAR2 Codigo de lenguaje.               |
@@ -113,8 +112,7 @@ PROCEDURE create_update_item_prices(p_request_id       IN      NUMBER
 |    x_msg_error        OUT     VARCHAR2 Mensaje de error.                 |
 |                                                                          |
 +=========================================================================*/
-PROCEDURE create_update_items(p_request_id       IN      NUMBER
-                             ,p_request_phase_id IN      NUMBER
+PROCEDURE create_update_items(p_request_id       IN      VARCHAR2
                              ,p_draft_flag       IN      VARCHAR2
                              ,p_debug_flag       IN      VARCHAR2
                              ,p_language         IN      VARCHAR2
@@ -199,7 +197,7 @@ PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
                                    ,p_debug_flag        IN      VARCHAR2
                                    ,p_language          IN      VARCHAR2
                                    ,p_user_name         IN      VARCHAR2
-                                   ,p_json_in           IN  VARCHAR2
+                                   ,p_json_in           IN  CLOB
                                    ,x_json_result       OUT CLOB
                                    ,x_return_status     OUT     VARCHAR2
                                    ,x_msg_error         OUT     VARCHAR2
