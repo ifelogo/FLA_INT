@@ -145,16 +145,16 @@ PROCEDURE create_update_items(p_request_id       IN      VARCHAR2
 |    x_msg_error        OUT     VARCHAR2 Mensaje de error.                 |
 |                                                                          |
 +=========================================================================*/
-PROCEDURE wrap_create_update_items_json(p_request_id       IN      VARCHAR2
-                             ,p_draft_flag       IN      VARCHAR2
-                             ,p_debug_flag       IN      VARCHAR2
-                             ,p_language         IN      VARCHAR2
-                             ,p_user_name        IN      VARCHAR2
-                             ,p_json_in           IN  VARCHAR2
-                             ,x_json_result       OUT CLOB
-                             ,x_return_status     OUT     VARCHAR2
-                             ,x_msg_error         OUT     VARCHAR2
-                             );
+PROCEDURE wrap_create_update_items_json( p_request_id       IN      VARCHAR2
+                                        ,p_step             IN      NUMBER
+                                        ,p_draft_flag       IN      VARCHAR2
+                                        ,p_debug_flag       IN      VARCHAR2
+                                        ,p_language         IN      VARCHAR2
+                                        ,p_user_name        IN      VARCHAR2
+                                        ,x_json_result      OUT     CLOB
+                                        ,x_return_status    OUT     VARCHAR2
+                                        ,x_msg_error        OUT     VARCHAR2
+                                        );
 
 /*=========================================================================+
 |                                                                          |
@@ -193,12 +193,12 @@ PROCEDURE get_indexes (p_request_id       IN      NUMBER
 
 
 PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
+                                   ,p_step              IN      NUMBER
                                    ,p_draft_flag        IN      VARCHAR2
                                    ,p_debug_flag        IN      VARCHAR2
                                    ,p_language          IN      VARCHAR2
                                    ,p_user_name         IN      VARCHAR2
-                                   ,p_json_in           IN  CLOB
-                                   ,x_json_result       OUT CLOB
+                                   ,x_json_result       OUT     CLOB
                                    ,x_return_status     OUT     VARCHAR2
                                    ,x_msg_error         OUT     VARCHAR2
                                     );

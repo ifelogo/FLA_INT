@@ -417,20 +417,20 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- Inicializa datos globales.
   -- ---------------------------------------------------------------------------
- /* IF v_mesg_error IS NULL THEN
+   IF v_mesg_error IS NULL THEN
      BEGIN
        xx_global_pkg.initialize
          (p_user_name        => p_user_name
          ,p_language         => p_language
-         ,p_request_id       => p_request_id
-         ,p_request_phase_id => p_request_id
+         ,p_request_id       => NULL
+         ,p_request_phase_id => NULL
          );
        g_debug_flag := xx_debug_pkg.g_enabled;
      EXCEPTION
        WHEN others THEN
          v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
      END;
-  END IF;*/
+  END IF;
   -- ---------------------------------------------------------------------------
   -- Despliega parametros.
   -- ---------------------------------------------------------------------------
@@ -685,8 +685,7 @@ END insert_fla_common_int_req_trx;
 |    p_language             IN      VARCHAR2 Codigo de lenguaje.               |
 |    p_user_name            IN      VARCHAR2 Usuario.                          |
 |    p_integration_code     IN      VARCHAR2 Codigo de la integración.         |
-|    x_integration_steps    OUT     XX_FLA_COMMON_INT_STEPS_T Listado de pasos |
-|                                             por integración                  |
+|    p_params               IN      VARCHAR2 listado de parametros de entrada  |
 |    x_return_status        OUT     VARCHAR2 Estado de ejecucion.              |
 |    x_msg_error            OUT     VARCHAR2 Mensaje de error.                 |
 |                                                                              |
@@ -698,7 +697,6 @@ PROCEDURE get_int_params(p_request_id            IN      VARCHAR2
                         ,p_user_name             IN      VARCHAR2
                         ,p_integration_code      IN      VARCHAR2
                         ,p_params                IN      VARCHAR2
-                        --,x_params_list           OUT     XX_FLA_INT_PARAMS_T 
                         ,x_return_status         OUT     VARCHAR2
                         ,x_msg_error             OUT     VARCHAR2
                         )
@@ -726,7 +724,7 @@ BEGIN
   -- ---------------------------------------------------------------------------
   v_calling_sequence      := 'XX_FLA_COMMON_PRO_INT_PKG.GET_INT_PARAMS';
   x_return_status         := 'S';  
-  DBMS_OUTPUT.put_line('Init1');
+
   -- ---------------------------------------------------------------------------
   -- Inicializa datos globales.
   -- ---------------------------------------------------------------------------
@@ -735,14 +733,14 @@ BEGIN
         ' (+)'
        ,'1'
        );  
-  DBMS_OUTPUT.put_line('Init2');  
- /* IF v_mesg_error IS NULL THEN
+ 
+  IF v_mesg_error IS NULL THEN
      BEGIN
        xx_global_pkg.initialize
          (p_user_name        => p_user_name
          ,p_language         => p_language
-         ,p_request_id       => p_request_id
-         ,p_request_phase_id => p_request_id
+         ,p_request_id       => NULL
+         ,p_request_phase_id => NULL
          );
        g_debug_flag := xx_debug_pkg.g_enabled;
      EXCEPTION
@@ -750,8 +748,7 @@ BEGIN
          v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
      END;
   END IF;
-  DBMS_OUTPUT.put_line('Init3'); 
-  */
+
   -- ---------------------------------------------------------------------------
   -- Despliega parametros.
   -- ---------------------------------------------------------------------------
@@ -918,7 +915,7 @@ END get_int_params;
 /*=============================================================================+
 |                                                                              |
 | Public Procedure                                                             |
-|    CREATE_NEXT_STEP_QUERY_REQUEST                                                  |
+|    CREATE_NEXT_STEP_QUERY_REQUEST                                            |
 |                                                                              |
 | Description                                                                  |
 |    (descripcion del procedimiento)                                           |
@@ -1002,13 +999,13 @@ BEGIN
         ' (+)'
        ,'1'
        );  
-  /*DBMS_OUTPUT.put_line('Init2');  
+  
   IF v_mesg_error IS NULL THEN
      BEGIN
        xx_global_pkg.initialize
          (p_user_name        => p_user_name
          ,p_language         => p_language
-         ,p_request_id       => p_request_id
+         ,p_request_id       => NULL
          ,p_request_phase_id => NULL
          );
        g_debug_flag := xx_debug_pkg.g_enabled;
@@ -1017,7 +1014,7 @@ BEGIN
          v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
      END;
   END IF;
-  DBMS_OUTPUT.put_line('Init3'); */
+  
   
   -- ---------------------------------------------------------------------------
   -- Despliega parametros.
@@ -1078,12 +1075,12 @@ BEGIN
   END IF;
          
          
-  DBMS_OUTPUT.put_line('Init');       
+  
   -- ---------------------------------------------------------------------------
   -- Logica del proceso.
   -- ---------------------------------------------------------------------------
 
- DBMS_OUTPUT.put_line('Init2');  
+ 
   
       FOR r_next_step IN c_next_step LOOP
       
@@ -1115,8 +1112,6 @@ BEGIN
                     v_request := REPLACE(r_next_step.to_field ||'='||v_request_sql,'"','');
 
                         
-                    --v_request := CASE p_step_type WHEN 'REST' THEN '"'||r_next_step.to_field ||'":"'||v_request_sql||'"' ELSE v_request_sql END;
-                    DBMS_OUTPUT.put_line('v_request1->'||v_request);
                     
                 ELSIF r_next_step.to_field_type = 'TYPE' THEN
                     
@@ -1128,9 +1123,6 @@ BEGIN
                     v_request := r_next_step.to_field ||'='||r_next_step.to_value;
                             
                         
-                        --v_request  :=  r_next_step.to_value;
-                    --v_request := CASE p_step_type WHEN 'REST' THEN '"'||r_next_step.to_field ||'":"'||r_next_step.to_value||'"'ELSE r_next_step.to_value END;
-                    DBMS_OUTPUT.put_line('v_request3->'||v_request);
                 
                 END IF;
              
@@ -1148,7 +1140,6 @@ BEGIN
 
     
 
-    DBMS_OUTPUT.put_line('Request->'||v_request);
   -- ---------------------------------------------------------------------------
   -- Verifica si se produjo un error.
   -- ---------------------------------------------------------------------------
@@ -1240,54 +1231,27 @@ IS
   v_language                VARCHAR2(4);  
   
   v_request                 VARCHAR2(32767);
-  v_request_sql             VARCHAR2(32767);
-  v_statement               VARCHAR2(32767);
 
-  v_request_list            XX_FLA_COMMON_EXEC_REQS_T;
   v_request_list_select     XX_FLA_COMMON_EXEC_REQS_T;
-  v_request_obj             XX_FLA_COMMON_EXEC_REQ_O;
 
-  /*TYPE t_field IS RECORD (to_step NUMBER, field VARCHAR2(100), request_order NUMBER);
-  TYPE t_fields IS TABLE OF t_field INDEX BY PLS_INTEGER;
-TYPE t_val IS TABLE OF VARCHAR2(4000) INDEX BY VARCHAR2(100); -- key=field
-TYPE t_vals IS TABLE OF t_val INDEX BY PLS_INTEGER;            -- por iteración
-
-
-TYPE t_step_iter_count IS TABLE OF PLS_INTEGER INDEX BY PLS_INTEGER; -- step -> cantidad de iteraciones
-
---TYPE t_indices IS TABLE OF PLS_INTEGER INDEX BY PLS_INTEGER;         -- recursión/cartesiano
-
-
-
-v_step_iter_data   t_step_iter_data;
-v_step_iter_count  t_step_iter_count;
-v_indices          t_indices;
-v_globals          t_glob;
-i INTEGER := 0;
-  v_fields t_fields;
-  v_steps_with_iter  SYS.ODCINUMBERLIST := SYS.ODCINUMBERLIST();
-  v_steps_only_global SYS.ODCINUMBERLIST := SYS.ODCINUMBERLIST();*/
   
-  v_fields                SYS.ODCIVARCHAR2LIST;
+  v_fields                  SYS.ODCIVARCHAR2LIST;
   TYPE t_field IS RECORD (
     to_field VARCHAR2(100),
     from_field VARCHAR2(100)
   );
   TYPE t_fields IS TABLE OF t_field INDEX BY PLS_INTEGER;
-  v_fields_list           t_fields;
+  v_fields_list             t_fields;
   TYPE t_glob IS TABLE OF VARCHAR2(4000) INDEX BY VARCHAR2(100); -- valores globales (step|field)
-  v_globals               t_glob;
-TYPE t_val IS TABLE OF VARCHAR2(4000) INDEX BY VARCHAR2(100); -- key=campo
-TYPE t_vals IS TABLE OF t_val INDEX BY PLS_INTEGER; -- iteración
-v_step_iter_data        t_vals;
-TYPE t_indices IS TABLE OF PLS_INTEGER INDEX BY PLS_INTEGER;
-  v_indices               t_indices;
-  v_steps_with_iter       SYS.ODCINUMBERLIST := SYS.ODCINUMBERLIST();
-  v_steps_only_global SYS.ODCINUMBERLIST := SYS.ODCINUMBERLIST();
-  i                       INTEGER := 0;
-  
-  --TYPE t_step_iter_data IS TABLE OF t_val INDEX BY PLS_INTEGER; -- iteración -> mapa de campo
-
+  v_globals                 t_glob;
+  TYPE t_val IS TABLE OF VARCHAR2(4000) INDEX BY VARCHAR2(100); -- key=campo
+  TYPE t_vals IS TABLE OF t_val INDEX BY PLS_INTEGER; -- iteración
+  v_step_iter_data          t_vals;
+  TYPE t_indices IS TABLE OF PLS_INTEGER INDEX BY PLS_INTEGER;
+  v_indices                 t_indices;
+  v_steps_with_iter         SYS.ODCINUMBERLIST := SYS.ODCINUMBERLIST();
+  v_steps_only_global       SYS.ODCINUMBERLIST := SYS.ODCINUMBERLIST();
+  i                         INTEGER := 0;
   
   -- ---------------------------------------------------------------------------
   -- Declaracion de Cursores.
@@ -1318,8 +1282,7 @@ TYPE t_indices IS TABLE OF PLS_INTEGER INDEX BY PLS_INTEGER;
   PROCEDURE rec_cart(idx IN PLS_INTEGER, indices IN OUT t_indices) IS
 
   BEGIN
-    DBMS_OUTPUT.put_line('idx->'||idx);
-    DBMS_OUTPUT.put_line('v_steps_with_iter.COUNT->'||v_steps_with_iter.COUNT);
+
     IF idx > v_steps_with_iter.COUNT THEN
       DECLARE
         v_line VARCHAR2(4000) := '';
@@ -1328,11 +1291,11 @@ TYPE t_indices IS TABLE OF PLS_INTEGER INDEX BY PLS_INTEGER;
           IF f > 1 THEN v_line := v_line || '",'; END IF;
         
           IF v_globals.EXISTS(v_fields_list(f).from_field) THEN
-            DBMS_OUTPUT.put_line('Global->' ||v_fields_list(f).from_field);
+            
             v_line := v_line || '"param' ||f||'":"' || v_globals(v_fields_list(f).from_field);
           ELSE
           BEGIN
-            DBMS_OUTPUT.put_line('Detail->'||v_step_iter_data(indices(1))(v_fields_list(f).from_field));
+            
             IF v_step_iter_data.EXISTS(indices(1)) THEN
               IF v_step_iter_data(indices(1)).EXISTS(v_fields_list(f).from_field) THEN
                 v_line := v_line ||'"param' ||f||'":"'|| v_step_iter_data(indices(1))(v_fields_list(f).from_field);
@@ -1393,13 +1356,13 @@ BEGIN
         ' (+)'
        ,'1'
        );  
-  /*DBMS_OUTPUT.put_line('Init2');  
+  
   IF v_mesg_error IS NULL THEN
      BEGIN
        xx_global_pkg.initialize
          (p_user_name        => p_user_name
          ,p_language         => p_language
-         ,p_request_id       => p_request_id
+         ,p_request_id       => NULL --p_request_id
          ,p_request_phase_id => NULL
          );
        g_debug_flag := xx_debug_pkg.g_enabled;
@@ -1408,7 +1371,6 @@ BEGIN
          v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
      END;
   END IF;
-  DBMS_OUTPUT.put_line('Init3'); */
   
   -- ---------------------------------------------------------------------------
   -- Despliega parametros.
@@ -1469,15 +1431,14 @@ BEGIN
   END IF;
          
          
-  DBMS_OUTPUT.put_line('Init');       
   -- ---------------------------------------------------------------------------
   -- Logica del proceso.
   -- ---------------------------------------------------------------------------
  
 
 
- DBMS_OUTPUT.put_line('Init2');  
-    IF p_msg_type = 'QUERY' 
+    IF v_mesg_error  IS NULL
+        AND p_msg_type = 'QUERY' 
         AND NVL(p_step_type,'X') = 'REST'
     THEN            
 
@@ -1497,22 +1458,16 @@ BEGIN
 
     ELSE      
 
- DBMS_OUTPUT.put_line('Init3');  
   -- 1. Obtener todos los campos presentes, en orden global
     i := 0;
     FOR r IN c_next_step LOOP
-        DBMS_OUTPUT.put_line('r.to_field->' || r.to_field); 
         IF r.to_field IS NOT NULL THEN
             i := i + 1;
             v_fields_list(i).to_field := r.to_field;
             v_fields_list(i).from_field := r.from_field;            
-            DBMS_OUTPUT.put_line('i->' || i);
-            DBMS_OUTPUT.put_line('v_fields_list(i).to_field->' || v_fields_list(i).to_field);  
-            DBMS_OUTPUT.put_line('v_fields_list(i).from_field->' || v_fields_list(i).from_field);  
              
         END IF;
     END LOOP;
- DBMS_OUTPUT.put_line('Init4');  
   -- 2. Separar steps solo globales vs steps con iteraciones
   FOR r IN (
       SELECT xfcirt.step,
@@ -1528,28 +1483,12 @@ BEGIN
     IF r.has_iter = 1 THEN
       v_steps_with_iter.EXTEND;
       v_steps_with_iter(v_steps_with_iter.COUNT) := r.step;
-      DBMS_OUTPUT.put_line('v_steps_with_iter' || r.step); 
     ELSE
       v_steps_only_global.EXTEND;
       v_steps_only_global(v_steps_only_global.COUNT) := r.step;
-      DBMS_OUTPUT.put_line('v_steps_only_global' || r.step); 
     END IF;
   END LOOP;
- DBMS_OUTPUT.put_line('Init5');  
-  -- 3. Cargar valores globales
-/*FOR i IN 1 .. v_steps_only_global.COUNT LOOP
-  FOR r IN (
-    SELECT step, param_key, param_value
-      FROM xx_fla_common_int_req_trx
-     WHERE request_id = p_request_id
-       AND step = v_steps_only_global(i)
-       AND iteration = -1
-  ) LOOP
-    v_globals(key(r.step, r.param_key)) := r.param_value;
-    DBMS_OUTPUT.put_line('key(r.step, r.param_key)' || key(r.step, r.param_key)); 
-    DBMS_OUTPUT.put_line('r.param_value' || r.param_value); 
-  END LOOP;
-END LOOP;*/
+
   -- 2. Cargar globals (iteration = -1)
   FOR r IN (
     SELECT param_key, param_value
@@ -1582,71 +1521,6 @@ END LOOP;*/
     END LOOP;
   END LOOP;
 
-/* DBMS_OUTPUT.put_line('Init6');  
--- 4. Cargar valores de steps con iteraciones (solo usando la tabla de transacciones)
-FOR i IN 1 .. v_steps_with_iter.COUNT LOOP
-    DECLARE
-        step_n NUMBER := v_steps_with_iter(i);
-        v_vals t_vals;
-        cnt INTEGER := 0;
-    BEGIN
-        -- Obtén todas las iteraciones para ese step
-        FOR iter IN (
-            SELECT DISTINCT iteration
-              FROM xx_fla_common_int_req_trx
-             WHERE request_id = p_request_id
-               AND step = step_n
-               AND iteration >= 0
-             ORDER BY iteration
-        ) LOOP
-            cnt := cnt + 1;
-            v_vals(cnt) := t_val();
-            -- Carga todos los campos de esa iteración para ese step
-            FOR r IN (
-                SELECT param_key, param_value
-                  FROM xx_fla_common_int_req_trx
-                 WHERE request_id = p_request_id
-                   AND step = step_n
-                   AND iteration = iter.iteration
-                 ORDER BY param_key
-            ) LOOP
-                v_vals(cnt)(r.param_key) := r.param_value;
-    --DBMS_OUTPUT.put_line('cnt->' || cnt); 
-    --DBMS_OUTPUT.put_line('r.param_key->' || r.param_key); 
-    --DBMS_OUTPUT.put_line('v_vals(cnt)(r.param_key)->' || v_vals(cnt)(r.param_key)); 
-    --DBMS_OUTPUT.put_line('r.param_value->' || r.param_value); 
-                
-            END LOOP;
-        END LOOP;
-        v_step_iter_data(step_n) := v_vals;
-        v_step_iter_count(step_n) := cnt;
-    END;
-END LOOP;
-
- DBMS_OUTPUT.put_line('Init7');  
-  -- 6. Ejecutar producto cartesiano
-  BEGIN
-    IF v_steps_with_iter.COUNT = 0 THEN
-      -- Solo globals
-      DECLARE
-        v_line VARCHAR2(4000) := '';
-      BEGIN
-      dbms_output.put_line('v_fields.COUNT->'||v_fields.COUNT);
-        FOR f IN 1 .. v_fields.COUNT LOOP
-          IF f > 1 THEN v_line := v_line || '|'; END IF;
-          v_line := v_line || NVL(v_globals(key(v_fields(f).to_step, v_fields(f).field)), '');
-          dbms_output.put_line('f->'||f);
-          dbms_output.put_line('v_fields(f).to_step->'||v_fields(f).to_step);
-          dbms_output.put_line('v_fields(f).field->'||v_fields(f).field);
-          dbms_output.put_line('key(v_fields(f).to_step, v_fields(f).field)->'||key(v_fields(f).to_step, v_fields(f).field));
-          dbms_output.put_line('v_globals(key(v_fields(f).to_step, v_fields(f).field))->'||v_globals(key(v_fields(f).to_step, v_fields(f).field)));
-        END LOOP;
-        dbms_output.put_line(v_line);
-      END;
-    ELSE
-      rec_cart(1, v_indices);
-    END IF;
-  END;*/
   
   -- 4. Ejecutar producto cartesiano (solo un nivel aquí, adapta según tus iteraciones)
   IF v_step_iter_data.COUNT = 0 THEN
@@ -1659,8 +1533,6 @@ END LOOP;
         v_line := v_line ||'"param'||f||'":"'|| NVL(v_globals(v_fields_list(f).from_field), '"');
 
       END LOOP;
-      DBMS_OUTPUT.put_line('Init5');
-      DBMS_OUTPUT.put_line(v_line);
       v_request_list_select.EXTEND;
       v_request_list_select(v_request_list_select.COUNT)  :=  XX_FLA_COMMON_EXEC_REQ_O(v_line);
       
@@ -1669,156 +1541,46 @@ END LOOP;
     v_indices(1) := 1;
     rec_cart(1, v_indices);
   END IF;  
- DBMS_OUTPUT.put_line('Init9');    
-    /*
-              FOR r_next_step IN c_next_step LOOP
-              
-                    v_request:= NULL;
-                    
-                    IF r_next_step.to_field_type = 'VALUE' THEN
-            
-                             v_statement := 'SELECT xfcirt.param_value              ' ||
-                                              '  FROM dual                          ' ||   
-                                              '  ,xx_fla_common_int_req_trx xfcirt  ' ||
-                                              '  WHERE 1 = 1                        ' ||
-                                              '  AND xfcirt.integration_code =      ''' || p_integration_code || '''' ||
-                                              '  AND xfcirt.param_key        =      ''' || r_next_step.from_field || ''''  ||
-                                              '  AND xfcirt.request_id       =      ''' || p_request_id || ''''  ||
-                                              '  ORDER BY xfcirt.iteration ';
-                             BEGIN
-                               EXECUTE IMMEDIATE v_statement
-                                  INTO v_request_sql;
-                             EXCEPTION
-                               WHEN others THEN
-                                 DBMS_OUTPUT.put_line('EXCEPTION1');
-                        
-                             END;
-                            IF p_step_type = 'REST' THEN
-                                
-                                IF p_msg_type = 'JSON' THEN
-                                
-                                    v_request := '"'||r_next_step.to_field ||'":"'||v_request_sql||'"';
+
+    IF v_mesg_error  IS NULL
+        AND v_request_list_select IS NOT NULL
+    THEN
         
-                                END IF;
-                                
-                            ELSIF p_step_type = 'PL/SQL' THEN
-                            
-                                v_request:= v_request_sql;
-                                
-                            END IF;
-                            --v_request := CASE p_step_type WHEN 'REST' THEN '"'||r_next_step.to_field ||'":"'||v_request_sql||'"' ELSE v_request_sql END;
-                            DBMS_OUTPUT.put_line('v_request1->'||v_request);
-                            
-                        ELSIF r_next_step.to_field_type = 'TYPE' THEN
-                            
-             
-                            v_request := r_next_step.to_field;
-                                --v_request := CASE p_step_type WHEN 'REST' THEN '"'||r_next_step.to_field ||'":"'||v_request||'"'ELSE v_request END;
-                            DBMS_OUTPUT.put_line('v_request2->'||v_request);
-                            
-                        ELSIF r_next_step.to_field_type = 'CONST' THEN
         
-                            IF p_step_type = 'REST' THEN
-                                
-                                IF p_msg_type = 'JSON'  THEN
-                                
-                                    v_request := '"'||r_next_step.to_field ||'":"'||r_next_step.to_value||'"';
-                                    
-                                END IF;
-                                
-                            ELSIF p_step_type = 'PL/SQL' THEN
-                            
-                                v_request := r_next_step.to_value;
-                                
-                            END IF;                
-                                --v_request  :=  r_next_step.to_value;
-                            --v_request := CASE p_step_type WHEN 'REST' THEN '"'||r_next_step.to_field ||'":"'||r_next_step.to_value||'"'ELSE r_next_step.to_value END;
-                            DBMS_OUTPUT.put_line('v_request3->'||v_request);
-                        
-                    END IF;
-                     
-                     
-                                v_request_list_select.EXTEND;
-                                v_request_list_select(v_request_list_select.COUNT)  :=  XX_FLA_COMMON_EXEC_REQ_O(v_request);
-                     
-                     
-                  END LOOP;
-             
-            */
-             v_request := NULL;
+         v_request := NULL;
+
+          -- ---------------------------------------------------------------------------
+          -- Agrega todos los parametros de salida que no tiene configurado el to_field.
+          -- ---------------------------------------------------------------------------
+            FOR r IN c_next_step_type LOOP
+
+                IF r.to_field IS NOT NULL THEN
+                    i := i + 1;
+                    v_request := v_request || '"param' || i ||'":"'||r.to_field ||'",';
+                END IF;
+            END LOOP;
+
+        v_request := SUBSTR (v_request,1,LENGTH (v_request) -1);
+    
+
+          -- ---------------------------------------------------------------------------
+          -- A cada request se le agrega los parametros de salida.
+          -- ---------------------------------------------------------------------------
+    
+            FOR v IN v_request_list_select.FIRST..v_request_list_select.LAST LOOP                        
         
-             IF v_request_list_select IS NOT NULL
-             THEN
-        
-                /*FOR i IN v_request_list_select.FIRST..v_request_list_select.LAST LOOP
+                v_request_list_select(v).request :=  '{'||v_request_list_select(v).request ||'",' ||v_request||'}';
                 
-                    IF p_step_type = 'REST'
-                    THEN
-                           
-                            IF p_msg_type = 'JSON'  THEN
-                                
-                                    v_request := v_request || v_request_list_select(i).request || ','; 
-                                    
-                            END IF;
-                           
-                    ELSIF p_step_type = 'PL/SQL' THEN
-                    
-                            v_request := v_request || '"param' || TO_CHAR(i) || '":"' || v_request_list_select(i).request || '",';  
-        
-                    END IF;        
+            END LOOP;
                     
                     
-                END LOOP;*/
-                DBMS_OUTPUT.put_line('Init 10'); 
-                    FOR r IN c_next_step_type LOOP
-                        DBMS_OUTPUT.put_line('r.to_field->' || r.to_field); 
-                        IF r.to_field IS NOT NULL THEN
-                            i := i + 1;
-                            v_request := v_request || '"param' || i ||'":"'||r.to_field ||'",';
-                        END IF;
-                    END LOOP;
-                    v_request := SUBSTR (v_request,1,LENGTH (v_request) -1);
-                    FOR v IN v_request_list_select.FIRST..v_request_list_select.LAST LOOP                        
-                        v_request_list_select(v).request :=  '{'||v_request_list_select(v).request ||'",' ||v_request||'}';
-                        DBMS_OUTPUT.put_line(v_request_list_select(v).request); 
-                        
-                    END LOOP;
-                    
-                    
-            END IF;
+    
+    END IF;
         
             
             
-           /* IF v_mesg_error IS NULL
-            THEN
-                --v_request := SUBSTR (v_request,1,LENGTH (v_request) -1);
-                
-                
-                IF p_step_type = 'REST' THEN
-                    
-                            IF p_msg_type = 'JSON'  THEN
-                                
-                                    v_request := '{' || v_request || '}';
-                                    
-                            END IF;
-                                       
-                    
-                    ELSE
-                    
-                    v_request := '{' || v_request || '}';
-            END IF;
-          END IF;*/
-          
-            
-           /* v_request_obj := NULL;
-            v_request_obj := XX_FLA_COMMON_EXEC_REQ_O(v_request);
-            
-        
-            v_request_list.EXTEND;
-            v_request_list(v_request_list.COUNT)  :=  v_request_obj;*/
             
     END IF;
-    --DBMS_OUTPUT.put_line('Request->'||v_request);
   -- ---------------------------------------------------------------------------
   -- Verifica si se produjo un error.
   -- ---------------------------------------------------------------------------
@@ -1847,8 +1609,8 @@ END LOOP;
        );
 EXCEPTION
   WHEN others THEN
-    v_mesg_error := SQLERRM ; --v_calling_sequence  ||
-                    --message('XX_FLA_PROPERTY_GEN',SQLERRM);
+    v_mesg_error := v_calling_sequence  ||
+                    message('XX_FLA_PROPERTY_GEN',SQLERRM);
     debug(g_indent           ||
           v_calling_sequence ||
           '. '               ||
@@ -2281,6 +2043,361 @@ IS
   v_request_obj             XX_FLA_COMMON_EXEC_REQ_O;
   v_stmt                    VARCHAR2(1000);
   v_return_status           VARCHAR2(1);
+  --v_json                    JSON_OBJECT_T;
+  v_keys                    JSON_KEY_LIST;
+  v_in_json                 JSON_OBJECT_T := JSON_OBJECT_T();
+  v_sql                     VARCHAR2(4000);
+  v_json_result             CLOB;
+  v_msg_error               VARCHAR2(32767);
+  v_req_trx_id              xx_fla_common_int_req_trx.req_trx_id%TYPE;
+  v_json_requests  JSON_ARRAY_T := JSON_ARRAY_T();
+
+
+  v_in_json_string CLOB;
+  
+  v_json CLOB;
+  v_json_response                    JSON_OBJECT_T;
+  -- ---------------------------------------------------------------------------
+  -- Variables de respuesta de la API.
+  -- ---------------------------------------------------------------------------  
+  v_li_arr_response         JSON_ARRAY_T;
+  v_li_obj_response         JSON_OBJECT_T;
+  v_keys_response           json_key_list;
+
+  -- ---------------------------------------------------------------------------
+  -- Declaracion de Cursores.
+  -- ---------------------------------------------------------------------------
+
+
+    
+BEGIN
+  -- ---------------------------------------------------------------------------
+  -- Inicializa variables.
+  -- ---------------------------------------------------------------------------
+  v_calling_sequence      := 'XX_FLA_COMMON_PRO_INT_PKG.EXECUTE_PL_REQUEST';
+  x_return_status         := 'S';  
+  v_request_list          := XX_FLA_COMMON_EXEC_REQS_T();
+  v_request_list_select   := XX_FLA_COMMON_EXEC_REQS_T();
+  -- ---------------------------------------------------------------------------
+  -- Inicializa datos globales.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );  
+  IF v_mesg_error IS NULL THEN
+     BEGIN
+       xx_global_pkg.initialize
+         (p_user_name        => p_user_name
+         ,p_language         => p_language
+         ,p_request_id       => NULL
+         ,p_request_phase_id => NULL
+         );
+       g_debug_flag := xx_debug_pkg.g_enabled;
+     EXCEPTION
+       WHEN others THEN
+         v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
+     END;
+  END IF;
+
+  
+  -- ---------------------------------------------------------------------------
+  -- Despliega parametros.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );
+  debug(g_indent                     ||
+        v_calling_sequence           ||
+        '. Nro. del requerimiento: ' ||
+        TO_CHAR(p_request_id)
+       ,'1'
+       );
+  /*debug(g_indent                                ||
+        v_calling_sequence                      ||
+        '. Nro. de requerimiento de la etapa: ' ||
+        TO_CHAR(p_request_phase_id)
+       ,'1'
+       );*/
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Modo borrador: ' ||
+        p_draft_flag
+       ,'1'
+       );
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Flag de debug: ' ||
+        p_debug_flag
+       ,'1'
+       );
+  debug(g_indent                 ||
+        v_calling_sequence       ||
+        '. Codigo de lenguaje: ' ||
+        p_language
+       ,'1'
+       );
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. Usuario: '      ||
+        p_user_name
+       ,'1'
+       );
+       
+  -- ---------------------------------------------------------------------------
+  -- Obtiene codigo de lenguaje.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL THEN
+     v_language := xx_global_pkg.language;
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Codigo de lenguaje seteado: ' ||
+           v_language
+          ,'1'
+          );
+  END IF;
+         
+         
+       
+  -- ---------------------------------------------------------------------------
+  -- Logica del proceso.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL 
+  THEN
+
+    v_json := '[';
+    FOR i IN 1 .. p_request.COUNT LOOP
+        IF i > 1 THEN
+            v_json := v_json || ',';
+        END IF;
+        v_json := v_json || p_request(i).request;
+    END LOOP;
+    v_json := v_json || ']';
+
+  IF v_mesg_error  IS NULL THEN
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Json Created: ' ||
+           v_language
+          ,'1'
+          );
+  END IF;
+
+  IF v_mesg_error  IS NULL THEN         
+    -- 2.2. Guardar el JSON en la tabla temporal
+    BEGIN
+        INSERT INTO XX_FLA_EXEC_REQUESTS_TMP (request_id, payload,step,creation_date,created_by,last_update_date,last_updated_by)
+        VALUES (p_request_id, v_json,p_step,SYSDATE,p_user_name,SYSDATE,p_user_name);
+    EXCEPTION
+        WHEN OTHERS THEN
+            v_mesg_error := message('XX_FLA_PROPERTY_INSERT',SQLERRM);
+              DBMS_OUTPUT.put_line('eRROR->'||SQLERRM); 
+    END;
+  END IF;
+    
+  IF v_mesg_error  IS NULL THEN
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Json Inserted: '
+          ,'1'
+          );
+  END IF;
+             
+
+       v_sql := 'BEGIN ' || p_step_object || '(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;';
+
+         
+  IF v_mesg_error  IS NULL THEN
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. sql: ' ||
+           v_sql
+          ,'1'
+          );
+  END IF;
+   
+    BEGIN    
+      EXECUTE IMMEDIATE v_sql
+        USING IN p_request_id,IN p_step , IN p_draft_flag, IN NVL(p_debug_flag,'N'),
+              IN p_language, IN p_user_name,  OUT v_json_result, OUT v_return_status, OUT v_mesg_error;
+    EXCEPTION
+        WHEN OTHERS THEN
+            v_mesg_error := message('XX_FLA_PROPERTY_EXECUTE_IMMEDIATE',SQLERRM);
+    END;
+  
+  IF v_mesg_error  IS NULL THEN
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Execute inmmediate.Ok: ' 
+          ,'1'
+          );
+  END IF;
+
+
+      IF v_mesg_error IS NULL 
+        AND v_json_result IS NOT NULL 
+      THEN
+          -- ---------------------------------------------------------------------------
+          -- Procesa respuesta.
+          -- ---------------------------------------------------------------------------    
+          v_json_response := JSON_OBJECT_T.parse(v_json_result);
+          v_keys := v_json_response.get_keys;
+          FOR j IN 1 .. v_keys.COUNT LOOP
+            
+            v_li_arr_response := v_json_response.get_Array('x_items');
+                 debug(g_indent                         ||
+                       v_calling_sequence               ||
+                       '. Array Size: ' ||
+                       v_li_arr_response.get_size
+                      ,'1'
+                      );
+            
+            FOR k IN 0 .. v_li_arr_response.get_size - 1 LOOP
+            
+                v_li_obj_response := JSON_OBJECT_T(v_li_arr_response.get(k));
+                
+                v_keys_response := v_li_obj_response.get_keys;
+                
+                FOR i IN 1 .. v_keys_response.COUNT LOOP
+                    
+                    BEGIN
+                        v_req_trx_id :=  xx_fla_common_pro_int_req_trx_s.NEXTVAL; 
+                        EXCEPTION
+                            WHEN OTHERS THEN
+                                v_req_trx_id := NULL;
+                                v_mesg_error := message('FLA_COMMON_REQ_TRX_SEQ',SQLERRM);
+                                RETURN;
+                    END;
+              
+                    
+                    IF v_mesg_error IS NULL
+                    THEN
+
+
+                               insert_fla_common_int_req_trx(
+                                                               p_user_name
+                                                              ,v_req_trx_id
+                                                              ,p_request_id
+                                                              ,p_integration_code
+                                                              ,p_step
+                                                              ,CASE v_li_arr_response.get_size WHEN 1 THEN -1 ELSE k END
+                                                              ,TRIM(v_keys_response(i))
+                                                              ,TRIM(REPLACE(v_li_obj_response.get(v_keys_response(i)).to_string,'"',''))
+                                                              ,x_return_status
+                                                              ,v_mesg_error
+                                                              );
+
+                    END IF;
+                END LOOP;
+    
+
+    
+              END LOOP;
+    
+          END LOOP;
+      
+      
+      END IF;
+
+
+
+
+  END IF;
+
+  -- ---------------------------------------------------------------------------
+  -- Verifica si se produjo un error.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error IS NOT NULL THEN
+     x_return_status := 'E';
+     x_msg_error     := v_mesg_error;
+     debug(g_indent           ||
+           v_calling_sequence ||
+           '. '               ||
+           v_mesg_error
+          ,'1'
+          );
+    ELSE
+      
+        x_return_status := 'S';
+        x_msg_error     := v_mesg_error;
+        
+  END IF;
+  -- ---------------------------------------------------------------------------
+  -- Fin del proceso.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (-)'
+       ,'1'
+       );
+EXCEPTION
+  WHEN others THEN
+    v_mesg_error := v_calling_sequence  ||
+                    message('XX_FLA_PROPERTY_GEN1',SQLERRM);
+    debug(g_indent           ||
+          v_calling_sequence ||
+          '. '               ||
+          v_mesg_error
+         ,'1'
+         );
+    debug(g_indent           ||
+          v_calling_sequence ||
+          ' (-)'
+         ,'1'
+         );
+    x_return_status := 'E';
+    x_msg_error     := SQLERRM; --v_mesg_error;
+
+END execute_pl_request;
+
+/*=============================================================================+
+|                                                                              |
+| Public Procedure                                                             |
+|    EXECUTE_PL_REQUEST                                                        |
+|                                                                              |
+| Description                                                                  |
+|    (descripcion del procedimiento)                                           |
+|                                                                              |
+| Parameters                                                                   |
+|    p_request_id           IN      VARCHAR2 Nro. del requerimiento.           |
+|    p_draft_flag           IN      VARCHAR2 Modo borrador.                    |
+|    p_debug_flag           IN      VARCHAR2 Flag de debug.                    |
+|    p_language             IN      VARCHAR2 Codigo de lenguaje.               |
+|    p_user_name            IN      VARCHAR2 Usuario.                          |
+|    p_integration_code     IN      VARCHAR2 Codigo de la integración.         |
+|    p_step                 IN      NUMBER   Id del Paso.                      |
+|    p_step_object          IN      VARCHAR2 Nombre del objecto a ejecutar.    |
+|    p_request              IN      XX_FLA_COMMON_EXEC_REQS_T Listado del      |
+|                                             request                          |
+|    x_return_status        OUT     VARCHAR2 Estado de ejecucion.              |
+|    x_msg_error            OUT     VARCHAR2 Mensaje de error.                 |
+|                                                                              |
++=============================================================================*/
+PROCEDURE execute_pl_request1(p_request_id            IN      VARCHAR2
+                            ,p_draft_flag            IN      VARCHAR2
+                            ,p_debug_flag            IN      VARCHAR2
+                            ,p_language              IN      VARCHAR2
+                            ,p_user_name             IN      VARCHAR2
+                            ,p_integration_code      IN      VARCHAR2
+                            ,p_step                  IN      NUMBER
+                            ,p_step_object           IN      VARCHAR2
+                            ,p_request               IN      XX_FLA_COMMON_EXEC_REQS_T
+                            ,x_return_status         OUT     VARCHAR2
+                            ,x_msg_error             OUT     VARCHAR2
+                             )
+IS
+  v_calling_sequence        VARCHAR2(2000);
+  v_mesg_error              VARCHAR2(32767);
+  v_language                VARCHAR2(4);  
+  --v_in_json_string          VARCHAR2(32767);
+  v_request_list            XX_FLA_COMMON_EXEC_REQS_T;
+  v_request_list_select     XX_FLA_COMMON_EXEC_REQS_T;
+  v_request_obj             XX_FLA_COMMON_EXEC_REQ_O;
+  v_stmt                    VARCHAR2(1000);
+  v_return_status           VARCHAR2(1);
   v_json                    JSON_OBJECT_T;
   v_keys                    JSON_KEY_LIST;
   v_in_json                 JSON_OBJECT_T := JSON_OBJECT_T();
@@ -2606,8 +2723,7 @@ EXCEPTION
     x_return_status := 'E';
     x_msg_error     := SQLERRM; --v_mesg_error;
 
-END execute_pl_request;
-
+END execute_pl_request1;
 
 /*=============================================================================+
 |                                                                              |
@@ -2659,30 +2775,10 @@ IS
   v_row                     VARCHAR2(4000);
   v_num_campos              NUMBER := 1;
   v_iteration               NUMBER := 0;
-
-  
-  --v_result                  VARCHAR2(32767);
-  
-
-  --v_request_list            XX_FLA_COMMON_EXEC_REQS_T;
-  --v_request_list_select     XX_FLA_COMMON_EXEC_REQS_T;
-  --v_request_obj             XX_FLA_COMMON_EXEC_REQ_O;
-
   v_return_status           VARCHAR2(1);
-  --v_json                    JSON_OBJECT_T;
-  --v_keys                    JSON_KEY_LIST;
-  --v_in_json                 JSON_OBJECT_T := JSON_OBJECT_T();
-
-  --v_json_result             CLOB;
   v_msg_error               VARCHAR2(32767);
   v_req_trx_id              xx_fla_common_int_req_trx.req_trx_id%TYPE;
   
-  -- ---------------------------------------------------------------------------
-  -- Variables de respuesta de la API.
-  -- ---------------------------------------------------------------------------  
-  --v_li_arr_response         JSON_ARRAY_T;
-  --v_li_obj_response         JSON_OBJECT_T;
-  --v_keys_response           json_key_list;
 
   -- ---------------------------------------------------------------------------
   -- Declaracion de Cursores.
@@ -2717,13 +2813,12 @@ BEGIN
         ' (+)'
        ,'1'
        );  
-  /*DBMS_OUTPUT.put_line('Init2');  
   IF v_mesg_error IS NULL THEN
      BEGIN
        xx_global_pkg.initialize
          (p_user_name        => p_user_name
          ,p_language         => p_language
-         ,p_request_id       => p_request_id
+         ,p_request_id       => NULL
          ,p_request_phase_id => NULL
          );
        g_debug_flag := xx_debug_pkg.g_enabled;
@@ -2732,7 +2827,7 @@ BEGIN
          v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
      END;
   END IF;
-  DBMS_OUTPUT.put_line('Init3'); */
+
   
   -- ---------------------------------------------------------------------------
   -- Despliega parametros.
@@ -2793,7 +2888,7 @@ BEGIN
   END IF;
          
          
-  DBMS_OUTPUT.put_line('Init1');       
+
   -- ---------------------------------------------------------------------------
   -- Logica del proceso.
   -- ---------------------------------------------------------------------------
@@ -2832,19 +2927,7 @@ BEGIN
         ') jt';
   END IF;
   
-  /*IF v_mesg_error   IS NULL 
-    AND v_sql       IS NOT NULL 
-  THEN
   
-    BEGIN
-        EXECUTE IMMEDIATE v_sql USING IN p_json_response INTO v_result;
-        EXCEPTION
-            WHEN OTHERS THEN
-                NULL;
-    END;
-  END IF;*/
-  
-  --v_mesg_error:=v_sql;
   IF v_mesg_error   IS NULL 
     AND v_sql       IS NOT NULL 
   THEN
@@ -2887,19 +2970,8 @@ BEGIN
 
                     END IF;
                     
-                    --v_mesg_error  := v_row || '-' ||  REGEXP_SUBSTR(v_row, '[^|]+', 1, i ) ||'-'||i;-- || ' - ' ||v_columns_name(i);
+
                 END LOOP;
-            -- 4. Separar los valores por campo usando REGEXP_SUBSTR
-            -- Por ejemplo, para 3 campos:
-            -- campo1 := REGEXP_SUBSTR(v_row, '[^|]+', 1, 1);
-            -- campo2 := REGEXP_SUBSTR(v_row, '[^|]+', 1, 2);
-            -- campo3 := REGEXP_SUBSTR(v_row, '[^|]+', 1, 3);
-    
-            -- Puedes usar un bucle para N campos si lo necesitas
-    
-            -- 5. Insertar en la tabla destino
-            -- INSERT INTO xx_fla_common_int_req_trx (campo1, campo2, campo3)
-            -- VALUES (campo1, campo2, campo3);
             
             v_iteration := v_iteration + 1;    
             
@@ -2912,78 +2984,6 @@ BEGIN
     END;
   END IF;  
   
-  --v_mesg_error := v_result;
-  
-/* Logica menor a json de 32 kb  
-  IF v_mesg_error  IS NULL 
-    AND p_json_response IS NOT NULL
-  THEN
-
-
-      -- ---------------------------------------------------------------------------
-      -- Procesa respuesta.
-      -- ---------------------------------------------------------------------------    
-      v_json := JSON_OBJECT_T.parse(p_json_response);
-      
-      v_keys := v_json.get_keys;
-        DBMS_OUTPUT.put_line('InitJsonCompleto->'||v_json.to_string);
-      FOR j IN 1 .. v_keys.COUNT LOOP
-        DBMS_OUTPUT.put_line('Init5->'||v_keys(j));
-        DBMS_OUTPUT.put_line('Init5->'||v_json.get_string(v_keys(j)));
-        
-        v_li_arr_response := v_json.get_Array(p_root_item);
-        
-        FOR k IN 0 .. v_li_arr_response.get_size - 1 LOOP
-        
-            v_li_obj_response := JSON_OBJECT_T(v_li_arr_response.get(k));
-            
-            v_keys_response := v_li_obj_response.get_keys;
-            
-            FOR i IN 1 .. v_keys_response.COUNT LOOP
-                dbms_output.put_line('InitInLoop.keys->'||v_keys_response(i));
-                dbms_output.put_line('InitInLoop.values->'||v_li_obj_response.get(v_keys_response(i)).to_string);
-                
-                BEGIN
-                    v_req_trx_id :=  xx_fla_common_pro_int_req_trx_s.NEXTVAL; 
-                    EXCEPTION
-                        WHEN OTHERS THEN
-                            v_req_trx_id := NULL;
-                            v_mesg_error := message('FLA_COMMON_REQ_TRX_SEQ',SQLERRM);
-                            RETURN;
-                END;
-          
-                
-                IF v_mesg_error IS NULL
-                THEN
-dbms_output.put_line('INSERT->'||v_keys_response(i));
-                           insert_fla_common_int_req_trx(
-                                                           p_user_name
-                                                          ,v_req_trx_id
-                                                          ,p_request_id
-                                                          ,p_integration_code
-                                                          ,p_step
-                                                          ,k --Iteración unica
-                                                          ,TRIM(v_keys_response(i))
-                                                          ,TRIM(v_li_obj_response.get(v_keys_response(i)).to_string)
-                                                          ,x_return_status
-                                                          ,v_mesg_error
-                                                          );
-
-                END IF;
-            END LOOP;
-
-            DBMS_OUTPUT.put_line('InitInLoop->'||v_li_obj_response.to_string);    
-
-          END LOOP;
-
-      END LOOP;
-      
-
-
-
-
-  END IF;
-*/
   -- ---------------------------------------------------------------------------
   -- Verifica si se produjo un error.
   -- ---------------------------------------------------------------------------

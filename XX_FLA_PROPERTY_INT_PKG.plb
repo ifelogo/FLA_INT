@@ -1718,20 +1718,20 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- Inicializa datos globales.
   -- ---------------------------------------------------------------------------
-  /*IF v_mesg_error IS NULL THEN
+  IF v_mesg_error IS NULL THEN
      BEGIN
        xx_global_pkg.initialize
          (p_user_name        => p_user_name
          ,p_language         => p_language
-         ,p_request_id       => p_request_id
-         ,p_request_phase_id => p_request_phase_id
+         ,p_request_id       => NULL
+         ,p_request_phase_id => NULL
          );
        g_debug_flag := xx_debug_pkg.g_enabled;
      EXCEPTION
        WHEN others THEN
          v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
      END;
-  END IF;*/
+  END IF;
   -- ---------------------------------------------------------------------------
   -- Despliega parametros.
   -- ---------------------------------------------------------------------------
@@ -1881,92 +1881,271 @@ END get_countries;
 
 
 PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
+                                   ,p_step              IN      NUMBER
                                    ,p_draft_flag        IN      VARCHAR2
                                    ,p_debug_flag        IN      VARCHAR2
                                    ,p_language          IN      VARCHAR2
                                    ,p_user_name         IN      VARCHAR2
-                                   ,p_json_in           IN      CLOB
                                    ,x_json_result       OUT     CLOB
                                    ,x_return_status     OUT     VARCHAR2
                                    ,x_msg_error         OUT     VARCHAR2
                                     ) IS
-    v_countries      XX_FLA_COUNTRIES_T;
-    v_return_status  VARCHAR2(10);
-    v_msg_error      VARCHAR2(4000);
-    v_json_obj       JSON_OBJECT_T;
-    v_json_arr       JSON_ARRAY_T := JSON_ARRAY_T();
-    v_country_obj    JSON_OBJECT_T;
-    v_in_arr         JSON_ARRAY_T;
-    v_out_arr        JSON_ARRAY_T := JSON_ARRAY_T();
-     -- v_json         JSON_OBJECT_T;
-      v_keys         JSON_KEY_LIST;
-      v_in_json      JSON_OBJECT_T := JSON_OBJECT_T();
-          v_req_obj        JSON_OBJECT_T;
+
+  v_calling_sequence        VARCHAR2(2000);
+  v_mesg_error              VARCHAR2(32767);
+  v_language                VARCHAR2(4);  
   
+  v_countries               XX_FLA_COUNTRIES_T;
+  v_return_status           VARCHAR2(10);
+  v_msg_error               VARCHAR2(4000);
+  v_json_obj                JSON_OBJECT_T;
+  v_json_arr                JSON_ARRAY_T := JSON_ARRAY_T();
+  v_country_obj             JSON_OBJECT_T;
+  v_in_arr                  JSON_ARRAY_T;
+  v_out_arr                 JSON_ARRAY_T := JSON_ARRAY_T();
+  v_keys                    JSON_KEY_LIST;
+  v_in_json                 JSON_OBJECT_T := JSON_OBJECT_T();
+  v_req_obj                 JSON_OBJECT_T;
+  v_json                    CLOB;
+    
 BEGIN
-DBMS_OUTPUT.put_line('wrap_get_countries_json1.1->');  
-  v_countries            := XX_FLA_COUNTRIES_T();
-  --v_json := JSON_OBJECT_T.parse(p_json_in); 
-DBMS_OUTPUT.put_line('wrap_get_countries_json1.2->');  
+  -- ---------------------------------------------------------------------------
+  -- Inicializa variables.
+  -- ---------------------------------------------------------------------------
+  v_calling_sequence := 'XX_FLA_PROPERTY_INT_PKG.WRAP_GET_COUNTRIES_JSON';
+  x_return_status    := 'S';
+  -- ---------------------------------------------------------------------------
+  -- Inicializa datos globales.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error IS NULL THEN
+     BEGIN
+       xx_global_pkg.initialize
+         (p_user_name        => p_user_name
+         ,p_language         => p_language
+         ,p_request_id       => NULL
+         ,p_request_phase_id => NULL
+         );
+       g_debug_flag := xx_debug_pkg.g_enabled;
+     EXCEPTION
+       WHEN others THEN
+         v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
+     END;
+  END IF;
+  -- ---------------------------------------------------------------------------
+  -- Despliega parametros.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );
+  debug(g_indent                     ||
+        v_calling_sequence           ||
+        '. Nro. del requerimiento: ' ||
+        TO_CHAR(p_request_id)
+       ,'1'
+       );
+  /*debug(g_indent                                ||
+        v_calling_sequence                      ||
+        '. Nro. de requerimiento de la etapa: ' ||
+        TO_CHAR(p_request_phase_id)
+       ,'1'
+       );*/
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Modo borrador: ' ||
+        p_draft_flag
+       ,'1'
+       );
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Flag de debug: ' ||
+        p_debug_flag
+       ,'1'
+       );
+  debug(g_indent                 ||
+        v_calling_sequence       ||
+        '. Codigo de lenguaje: ' ||
+        p_language
+       ,'1'
+       );
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. Usuario: '      ||
+        p_user_name
+       ,'1'
+       );
+       
+  -- ---------------------------------------------------------------------------
+  -- Obtiene codigo de lenguaje.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL THEN
+     v_language := xx_global_pkg.language;
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Codigo de lenguaje seteado: ' ||
+           v_language
+          ,'1'
+          );
+  END IF;
+         
+         
+         
+  -- ---------------------------------------------------------------------------
+  -- Logica del proceso.
+  -- ---------------------------------------------------------------------------
 
-    v_in_arr := JSON_ARRAY_T.parse(p_json_in); 
-DBMS_OUTPUT.put_line('wrap_get_countries_json1.3->');  
-    FOR i IN 0 .. v_in_arr.get_size - 1 LOOP
-        v_req_obj := JSON_OBJECT_T(v_in_arr.get(i)); -- Obtener el objeto individual
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. BeforeSelect: ' ||
+           v_language
+          ,'1'
+          );
+    BEGIN
+        SELECT payload 
+        INTO v_json
+        FROM xx_fla_exec_requests_tmp
+        WHERE request_id = p_request_id
+        AND step         = p_step
+        AND ROWNUM       = 1;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                v_mesg_error := message('XX_FLA_PROPERTY_PAYLOAD_NOT_FOUND',SQLERRM);                
+            WHEN OTHERS THEN
+                v_mesg_error := message('XX_FLA_PROPERTY_PAYLOAD_FOUND',SQLERRM);
+    END;
 
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. AfterSelect: ' ||
+           v_language
+          ,'1'
+          );
 
-        DBMS_OUTPUT.put_line('param1->' || v_req_obj.get_string('param1'));
-        DBMS_OUTPUT.put_line('param2->' || v_req_obj.get_string('param2'));
-  v_countries := XX_FLA_COUNTRIES_T();
---v_jo.get_string(v_keys(i))
-    get_countries(
-        p_request_id       => p_request_id,
-        p_request_phase_id => NULL,
-        p_draft_flag       => REPLACE(v_req_obj.get_string('param1'),'''',''),
-        p_debug_flag       => p_debug_flag,
-        p_language         => p_language,
-        p_user_name        => p_user_name,
-        p_country_code     => REPLACE(v_req_obj.get_string('param2'),'''',''),
-        x_items            => v_countries,
-        x_return_status    => v_return_status,
-        x_msg_error        => v_msg_error
-    );
-
-DBMS_OUTPUT.put_line('wrap_get_countries_json->After PL'||v_msg_error);
-DBMS_OUTPUT.put_line('wrap_get_countries_json->v_return_status'||v_return_status);
-DBMS_OUTPUT.put_line('Count->'||v_countries.count);
-    IF v_countries IS NOT NULL 
-       AND v_countries.COUNT > 0 
+    
+    IF v_mesg_error IS NULL
+        --AND v_json IS NOT NULL
     THEN
-    DBMS_OUTPUT.put_line('is not nuLL');
-    DBMS_OUTPUT.put_line('is not nuLL->'||v_countries.count);
-        FOR i IN v_countries.FIRST .. v_countries.LAST LOOP
-        DBMS_OUTPUT.put_line('is not nuLL1');
-            v_country_obj := JSON_OBJECT_T();
-            v_country_obj.put('territory_short_name', REPLACE(v_countries(i).territory_short_name,'"',''));
-            v_country_obj.put('territory_num',  REPLACE(v_countries(i).territory_num,'"',''));
-            -- Agrega aquí los demás campos de XX_FLA_COUNTRY_O si existen
-            v_json_arr.append(v_country_obj);
-            DBMS_OUTPUT.put_line('is not nuLL2');
+    
+        v_in_arr := JSON_ARRAY_T.parse(v_json); 
+        FOR i IN 0 .. v_in_arr.get_size - 1 LOOP
+            v_req_obj := JSON_OBJECT_T(v_in_arr.get(i)); -- Obtener el objeto individual
+    
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. BeforeGetCountry: ' ||
+           v_language
+          ,'1'
+          );
+    
+              v_countries := XX_FLA_COUNTRIES_T();
+                get_countries(
+                    p_request_id       => p_request_id,
+                    p_request_phase_id => NULL,
+                    p_draft_flag       => REPLACE(v_req_obj.get_string('param1'),'''',''),
+                    p_debug_flag       => p_debug_flag,
+                    p_language         => p_language,
+                    p_user_name        => p_user_name,
+                    p_country_code     => REPLACE(v_req_obj.get_string('param2'),'''',''),
+                    x_items            => v_countries,
+                    x_return_status    => v_return_status,
+                    x_msg_error        => v_msg_error
+                );
+          
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. AfterGetCountry: ' ||
+           v_language
+          ,'1'
+          );
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. AfterError: ' ||
+           v_msg_error
+          ,'1'
+          );
+
+            IF v_countries IS NOT NULL 
+               AND v_countries.COUNT > 0 
+            THEN
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. GotCountries: ' ||
+           v_msg_error
+          ,'1'
+          );        
+                FOR i IN v_countries.FIRST .. v_countries.LAST LOOP
+        
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Loop.Countries: ' ||
+           v_msg_error
+          ,'1'
+          );        
+                    v_country_obj := JSON_OBJECT_T();
+                    v_country_obj.put('territory_short_name', REPLACE(v_countries(i).territory_short_name,'"',''));
+                    v_country_obj.put('territory_num',  REPLACE(v_countries(i).territory_num,'"',''));
+                    -- Agrega aquí los demás campos de XX_FLA_COUNTRY_O si existen
+                    v_json_arr.append(v_country_obj);
+        
+                END LOOP;
+            END IF;
         END LOOP;
+        
+      
     END IF;
-    END LOOP;
-    v_json_obj := JSON_OBJECT_T();
-    --v_json_obj.put('x_return_status', v_return_status);
-    --v_json_obj.put('x_msg_error',     v_msg_error);
 
-    v_json_obj.put('x_items',         v_json_arr);
+    
+    IF v_mesg_error IS NULL
+    THEN
 
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. GotItems: ' ||
+           v_msg_error
+          ,'1'
+          );   
+        v_json_obj := JSON_OBJECT_T();
+    
+    
+        v_json_obj.put('x_items',         v_json_arr);
+    
+    
+        x_json_result := v_json_obj.to_clob;
 
-    x_json_result := v_json_obj.to_clob;
+    END IF;
+    
+    
 
     x_return_status:='S';
     x_msg_error:=NULL;
-    --x_json_result := '{"x_return_status":"E","x_msg_error":"' ||'falta nivel' ||  '"}';
+
+  -- ---------------------------------------------------------------------------
+  -- Fin del proceso.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (-)'
+       ,'1'
+       );
 EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.put_line('Excepion.wrap_get_countries_json->4'||SQLERRM);
-        x_json_result := '{"x_return_status":"E","x_msg_error":"' || REPLACE('falta niveles' || SQLERRM, '"', '\"') || '"}';
+  WHEN others THEN
+    v_mesg_error := v_calling_sequence  ||
+                    message('XX_FLA_PROPERTY_GEN',SQLERRM);
+    debug(g_indent           ||
+          v_calling_sequence ||
+          '. '               ||
+          v_mesg_error
+         ,'1'
+         );
+    debug(g_indent           ||
+          v_calling_sequence ||
+          ' (-)'
+         ,'1'
+         );
+    x_return_status := 'E';
+    x_msg_error     := v_mesg_error;
+    
 END wrap_get_countries_json;
 
 
@@ -2330,12 +2509,12 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- Inicializa datos globales.
   -- ---------------------------------------------------------------------------
-  /*IF v_mesg_error IS NULL THEN
+  IF v_mesg_error IS NULL THEN
      BEGIN
        xx_global_pkg.initialize
          (p_user_name        => p_user_name
          ,p_language         => p_language
-         ,p_request_id       => p_request_id
+         ,p_request_id       => NULL
          ,p_request_phase_id => NULL
          );
        g_debug_flag := xx_debug_pkg.g_enabled;
@@ -2343,7 +2522,7 @@ BEGIN
        WHEN others THEN
          v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
      END;
-  END IF;*/
+  END IF;
   -- ---------------------------------------------------------------------------
   -- Despliega parametros.
   -- ---------------------------------------------------------------------------
@@ -2648,8 +2827,254 @@ EXCEPTION
     x_msg_error     := v_mesg_error;
 END create_update_items;
 
-
 PROCEDURE wrap_create_update_items_json (
+                                          p_request_id       IN  VARCHAR2
+                                         ,p_step             IN  NUMBER
+                                         ,p_draft_flag       IN  VARCHAR2
+                                         ,p_debug_flag       IN  VARCHAR2
+                                         ,p_language         IN  VARCHAR2
+                                         ,p_user_name        IN  VARCHAR2
+                                         ,x_json_result      OUT CLOB
+                                         ,x_return_status    OUT VARCHAR2
+                                         ,x_msg_error        OUT VARCHAR2
+                                         )IS
+
+  v_calling_sequence        VARCHAR2(2000);
+  v_mesg_error              VARCHAR2(32767);
+  v_language                VARCHAR2(4);  
+  v_items_in                XX_FLA_ITEMS_T := XX_FLA_ITEMS_T(); -- Colección de entrada
+  v_items_out               XX_FLA_ITEMS_T;                     -- Colección de salida
+  v_return_status           VARCHAR2(10);
+  
+  v_json_obj                JSON_OBJECT_T;
+  v_req_obj                 JSON_OBJECT_T;
+  v_in_arr                  JSON_ARRAY_T;
+  v_out_arr                 JSON_ARRAY_T := JSON_ARRAY_T();
+  v_item_obj                JSON_OBJECT_T;
+  v_json                    CLOB;
+BEGIN
+  -- ---------------------------------------------------------------------------
+  -- Inicializa variables.
+  -- ---------------------------------------------------------------------------
+  v_calling_sequence := 'XX_FLA_PROPERTY_INT_PKG.WRAP_CREATE_UPDATE_ITEMS_JSON';
+  x_return_status    := 'S';
+  -- ---------------------------------------------------------------------------
+  -- Inicializa datos globales.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error IS NULL THEN
+     BEGIN
+       xx_global_pkg.initialize
+         (p_user_name        => p_user_name
+         ,p_language         => p_language
+         ,p_request_id       => NULL
+         ,p_request_phase_id => NULL
+         );
+       g_debug_flag := xx_debug_pkg.g_enabled;
+     EXCEPTION
+       WHEN others THEN
+         v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
+     END;
+  END IF;
+  -- ---------------------------------------------------------------------------
+  -- Despliega parametros.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );
+  debug(g_indent                     ||
+        v_calling_sequence           ||
+        '. Nro. del requerimiento: ' ||
+        TO_CHAR(p_request_id)
+       ,'1'
+       );
+  /*debug(g_indent                                ||
+        v_calling_sequence                      ||
+        '. Nro. de requerimiento de la etapa: ' ||
+        TO_CHAR(p_request_phase_id)
+       ,'1'
+       );*/
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Modo borrador: ' ||
+        p_draft_flag
+       ,'1'
+       );
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Flag de debug: ' ||
+        p_debug_flag
+       ,'1'
+       );
+  debug(g_indent                 ||
+        v_calling_sequence       ||
+        '. Codigo de lenguaje: ' ||
+        p_language
+       ,'1'
+       );
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. Usuario: '      ||
+        p_user_name
+       ,'1'
+       );
+       
+  -- ---------------------------------------------------------------------------
+  -- Obtiene codigo de lenguaje.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL THEN
+     v_language := xx_global_pkg.language;
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Codigo de lenguaje seteado: ' ||
+           v_language
+          ,'1'
+          );
+  END IF;
+         
+         
+         
+  -- ---------------------------------------------------------------------------
+  -- Logica del proceso.
+  -- ---------------------------------------------------------------------------
+     
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. before select: ' ||
+           v_language
+          ,'1'
+          );
+             
+    
+    BEGIN
+        SELECT payload 
+        INTO v_json
+        FROM xx_fla_exec_requests_tmp
+        WHERE request_id = p_request_id
+        AND step         = p_step
+        AND ROWNUM       = 1;-- ;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                v_mesg_error := message('XX_FLA_PROPERTY_PAYLOAD_NOT_FOUND',SQLERRM);                
+            WHEN OTHERS THEN
+                v_mesg_error := message('XX_FLA_PROPERTY_PAYLOAD_FOUND',SQLERRM);
+    END;     
+    debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. after select: ' ||
+           v_language
+          ,'1'
+          );
+     
+         
+    IF v_mesg_error IS NULL
+    THEN
+
+        -- Parsear el input como un array JSON
+        v_in_arr := JSON_ARRAY_T.parse(v_json);
+        
+        -- Construir la colección v_items_in con los objetos XX_FLA_ITEM_O
+        FOR i IN 0 .. v_in_arr.get_size - 1 LOOP
+        --DBMS_OUTPUT.put_line('wrap_create_update_items_json->Inicio.i-Z'||i);
+            v_req_obj := JSON_OBJECT_T(v_in_arr.get(i)); -- Objeto individual
+    
+            -- Crear un objeto XX_FLA_ITEM_O y poblar sus campos desde el JSON
+            DECLARE
+                v_item XX_FLA_ITEM_O;
+            BEGIN
+            
+                v_item := XX_FLA_ITEM_O(NULL
+                                            ,v_req_obj.get_string('param1') --country_code
+                                            ,v_req_obj.get_string('param2') --item_code
+                                            ,v_req_obj.get_string('param3') --description
+                                            ,v_req_obj.get_string('param4') --enabled_flag
+                                            ,NULL);
+                v_items_in.EXTEND;
+                v_items_in(v_items_in.LAST) := v_item;
+            END;
+        END LOOP;
+
+    END IF;
+    
+    
+    IF v_mesg_error IS NULL
+    THEN
+
+        -- Llamar a create_update_items una sola vez con toda la colección
+        create_update_items(
+            p_request_id      => p_request_id,
+            p_draft_flag      => p_draft_flag,
+            p_debug_flag      => p_debug_flag,
+            p_language        => p_language,
+            p_user_name       => p_user_name,
+            p_items           => v_items_in,
+            x_items           => v_items_out,
+            x_return_status   => v_return_status,
+            x_msg_error       => v_mesg_error
+        );
+
+
+    END IF;    
+
+    IF v_mesg_error IS NULL
+    THEN
+    
+        -- Convertir el resultado a JSON
+        IF v_items_out IS NOT NULL 
+            AND v_items_out.COUNT > 0 
+        THEN
+            FOR j IN v_items_out.FIRST .. v_items_out.LAST LOOP
+                v_item_obj := JSON_OBJECT_T();
+                v_item_obj.put('country_code', v_items_out(j).country_code);
+                v_item_obj.put('item_code',  v_items_out(j).item_code);
+                v_item_obj.put('description',  v_items_out(j).description);
+                v_item_obj.put('enabled_flag',  v_items_out(j).enabled_flag);
+                v_item_obj.put('request_id',  v_items_out(j).request_id);
+                -- ...agrega aquí los demás campos que quieras mostrar en la respuesta...
+                v_out_arr.append(v_item_obj);
+            END LOOP;
+        END IF;
+        v_json_obj := JSON_OBJECT_T();
+        v_json_obj.put('x_items', v_out_arr);
+    
+    END IF;
+    
+    x_json_result   := v_json_obj.to_clob;
+    x_return_status := v_return_status;
+    x_msg_error     := v_mesg_error;
+
+  -- ---------------------------------------------------------------------------
+  -- Fin del proceso.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (-)'
+       ,'1'
+       );
+EXCEPTION
+  WHEN others THEN
+    v_mesg_error := v_calling_sequence  ||
+                    message('XX_FLA_PROPERTY_GEN',SQLERRM);
+    debug(g_indent           ||
+          v_calling_sequence ||
+          '. '               ||
+          v_mesg_error
+         ,'1'
+         );
+    debug(g_indent           ||
+          v_calling_sequence ||
+          ' (-)'
+         ,'1'
+         );
+    x_return_status := 'E';
+    x_msg_error     := v_mesg_error;
+
+END wrap_create_update_items_json;
+
+
+
+PROCEDURE wrap_create_update_items_json1 (
     p_request_id       IN  VARCHAR2,
     p_draft_flag       IN  VARCHAR2,
     p_debug_flag       IN  VARCHAR2,
@@ -2739,7 +3164,7 @@ DBMS_OUTPUT.put_line('Count->'||v_items.count);
 EXCEPTION
     WHEN OTHERS THEN
         x_json_result := '{"x_return_status":"E","x_msg_error":"' || REPLACE(SQLERRM, '"', '\"') || '"}';
-END wrap_create_update_items_json;
+END wrap_create_update_items_json1;
 
 /*=========================================================================+
 |                                                                          |
