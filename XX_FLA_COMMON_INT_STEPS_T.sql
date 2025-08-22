@@ -46,6 +46,8 @@ CREATE OR REPLACE TYPE xx_fla_common_int_step_o AS OBJECT
 ,step_object        VARCHAR2(2000)
 ,msg_type	    VARCHAR2(20) --QUERY
 ,root_item	    VARCHAR2(100)
+,to_mails	    VARCHAR2(4000)
+,to_subject	    VARCHAR2(500)
 )
 ;
 /

@@ -544,7 +544,7 @@ END get_items_groups;
 +=========================================================================*/
 PROCEDURE get_item( 
                     p_country_code      IN      VARCHAR2
-                   ,p_item_code         IN      NUMBER
+                   ,p_item_code         IN      VARCHAR2
                    ,x_item_id           OUT     NUMBER
                    ,x_found             OUT     BOOLEAN
                    ,x_mesg_error        OUT     VARCHAR2
@@ -582,13 +582,13 @@ BEGIN
             WHEN NO_DATA_FOUND THEN                
                v_item_id    := NULL; 
                v_found      := FALSE;
+
                
             WHEN OTHERS THEN
                v_item_id    := NULL;
                v_mesg_error := message('ITEMS_FOUND',p_item_code||g_msg_del||SQLERRM);
                --v_mesg_error := SQLERRM;
                v_found      := FALSE;
-
 
     END;    
 
@@ -1249,9 +1249,9 @@ BEGIN
                         ,price              =   p_items(i).price
                         ,price_tax_free     =   p_items(i).price_tax_free
                         ,price_type         =   p_items(i).price_type
-                        ,request_id         =   NVL(p_items(i).request_id,-1)
+                        --,request_id         =   NVL(p_items(i).request_id,-1)
                         ,last_update_date   =   SYSDATE
-                        ,last_updated_by    =   -1 --NVL(p_user_name,-1)
+                        ,last_updated_by    =   '-1' --NVL(p_user_name,-1)
                     WHERE 1 = 1
                     AND item_price_id = v_item_price_id;
                 
@@ -1632,6 +1632,245 @@ EXCEPTION
     x_msg_error     := v_mesg_error;
 
 END get_indexes;
+
+/*=============================================================================+
+|                                                                              |
+| Public Procedure                                                             |
+|    GET_FLA_ITEMS_INT_PARAMS                                                  |
+|                                                                              |
+| Description                                                                  |
+|    (descripcion del procedimiento)                                           |
+|                                                                              |
+| Parameters                                                                   |
+|    p_request_id           IN      VARCHAR2 Nro. del requerimiento.           |
+|    p_draft_flag           IN      VARCHAR2 Modo borrador.                    |
+|    p_debug_flag           IN      VARCHAR2 Flag de debug.                    |
+|    p_language             IN      VARCHAR2 Codigo de lenguaje.               |
+|    p_user_name            IN      VARCHAR2 Usuario.                          |
+|    p_params               IN      VARCHAR2 listado de parametros de entrada  |
+|    x_country_code         OUT     VARCHAR2 codigo de pais.                   |
+|    x_draft_mode           OUT     VARCHAR2 Modo Borrador.                    |
+|    x_return_status        OUT     VARCHAR2 Estado de ejecucion.              |
+|    x_msg_error            OUT     VARCHAR2 Mensaje de error.                 |
+|                                                                              |
++=============================================================================*/
+PROCEDURE get_fla_items_int_params(p_request_id            IN      VARCHAR2
+                                  ,p_draft_flag            IN      VARCHAR2
+                                  ,p_debug_flag            IN      VARCHAR2
+                                  ,p_language              IN      VARCHAR2
+                                  ,p_user_name             IN      VARCHAR2
+                                  ,p_params                IN      VARCHAR2
+                                  ,x_country_code          OUT     VARCHAR2
+                                  ,x_draft_mode            OUT     VARCHAR2
+                                  ,x_return_status         OUT     VARCHAR2
+                                  ,x_msg_error             OUT     VARCHAR2
+                                  )
+IS
+  v_calling_sequence        VARCHAR2(2000);
+  v_mesg_error              VARCHAR2(32767);
+  v_language                VARCHAR2(4);  
+  
+  v_jo                      JSON_OBJECT_T;
+  v_keys                    JSON_KEY_LIST;
+  v_country_code            VARCHAR2(100);
+  v_draft_mode              VARCHAR2(1);
+
+  -- ---------------------------------------------------------------------------
+  -- Declaracion de Cursores.
+  -- ---------------------------------------------------------------------------
+  -- ---------------------------------------------------------------------------
+  -- Cursor de .
+  -- ---------------------------------------------------------------------------
+   --ORIGINAL
+    
+BEGIN
+  -- ---------------------------------------------------------------------------
+  -- Inicializa variables.
+  -- ---------------------------------------------------------------------------
+  v_calling_sequence      := 'XX_FLA_PROPERTY_INIT.GET_FLA_ITEMS_INT_PARAMS';
+  x_return_status         := 'S';  
+
+  -- ---------------------------------------------------------------------------
+  -- Inicializa datos globales.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );  
+ 
+  IF v_mesg_error IS NULL THEN
+     BEGIN
+       xx_global_pkg.initialize
+         (p_user_name        => p_user_name
+         ,p_language         => p_language
+         ,p_request_id       => NULL
+         ,p_request_phase_id => NULL
+         );
+       g_debug_flag := xx_debug_pkg.g_enabled;
+     EXCEPTION
+       WHEN others THEN
+         v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
+     END;
+  END IF;
+
+  -- ---------------------------------------------------------------------------
+  -- Despliega parametros.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );
+  debug(g_indent                     ||
+        v_calling_sequence           ||
+        '. Nro. del requerimiento: ' ||
+        TO_CHAR(p_request_id)
+       ,'1'
+       );
+  /*debug(g_indent                                ||
+        v_calling_sequence                      ||
+        '. Nro. de requerimiento de la etapa: ' ||
+        TO_CHAR(p_request_phase_id)
+       ,'1'
+       );*/
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Modo borrador: ' ||
+        p_draft_flag
+       ,'1'
+       );
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Flag de debug: ' ||
+        p_debug_flag
+       ,'1'
+       );
+  debug(g_indent                 ||
+        v_calling_sequence       ||
+        '. Codigo de lenguaje: ' ||
+        p_language
+       ,'1'
+       );
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. Usuario: '      ||
+        p_user_name
+       ,'1'
+       );
+       
+  -- ---------------------------------------------------------------------------
+  -- Obtiene codigo de lenguaje.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL THEN
+     v_language := xx_global_pkg.language;
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Codigo de lenguaje seteado: ' ||
+           v_language
+          ,'1'
+          );
+  END IF;
+         
+         
+         
+  -- ---------------------------------------------------------------------------
+  -- Logica del proceso.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL 
+    AND p_params IS NOT NULL
+  THEN
+
+      v_jo      := JSON_OBJECT_T.parse(p_params);
+      v_keys    := v_jo.get_keys;
+      --v_values  := v_jo.get_values;
+      FOR i IN 1..v_keys.COUNT LOOP
+         DBMS_OUTPUT.put_line('Name->' ||v_keys(i));
+         --v_acronyms := v_json_obj.get_string(v_keys(i));
+         DBMS_OUTPUT.put_line('Value->' || v_jo.get_string(v_keys(i)));
+         IF v_keys(i) IS NOT NULL
+         THEN
+
+
+         
+    
+            IF v_mesg_error IS NULL THEN
+
+                IF REPLACE(v_keys(i),'"','') = 'p_country_code'
+                THEN
+                    
+                    v_country_code  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+                IF REPLACE(v_keys(i),'"','') = 'p_draft_mode'
+                THEN
+                    
+                    v_draft_mode  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+            END IF;
+
+
+         END IF;
+
+      END LOOP;
+
+    
+  END IF;
+  
+  
+ 
+
+  -- ---------------------------------------------------------------------------
+  -- Verifica si se produjo un error.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error IS NOT NULL THEN
+     x_return_status := 'E';
+     x_msg_error     := v_mesg_error;
+     debug(g_indent           ||
+           v_calling_sequence ||
+           '. '               ||
+           v_mesg_error
+          ,'1'
+          );
+    ELSE
+      
+        x_draft_mode    :=  v_draft_mode;        
+        x_country_code  :=  v_country_code;
+        
+  END IF;
+  -- ---------------------------------------------------------------------------
+  -- Fin del proceso.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (-)'
+       ,'1'
+       );
+EXCEPTION
+  WHEN others THEN
+    v_mesg_error := v_calling_sequence  ||
+                    message('XX_FLA_PROPERTY_GEN',SQLERRM);
+    debug(g_indent           ||
+          v_calling_sequence ||
+          '. '               ||
+          v_mesg_error
+         ,'1'
+         );
+    debug(g_indent           ||
+          v_calling_sequence ||
+          ' (-)'
+         ,'1'
+         );
+    x_return_status := 'E';
+    x_msg_error     := v_mesg_error;
+
+END get_fla_items_int_params;
+
+
 
 /*=========================================================================+
 |                                                                          |
@@ -2149,6 +2388,1123 @@ EXCEPTION
 END wrap_get_countries_json;
 
 
+/*=============================================================================+
+|                                                                              |
+| Public Procedure                                                             |
+|    GET_FLA_ITEM_PRICES_INT_PARAMS                                            |
+|                                                                              |
+| Description                                                                  |
+|    (descripcion del procedimiento)                                           |
+|                                                                              |
+| Parameters                                                                   |
+|    p_request_id                   IN      VARCHAR2 Nro. del requerimiento.   |
+|    p_draft_flag                   IN      VARCHAR2 Modo borrador.            |
+|    p_debug_flag                   IN      VARCHAR2 Flag de debug.            |
+|    p_language                     IN      VARCHAR2 Codigo de lenguaje.       |
+|    p_user_name                    IN      VARCHAR2 Usuario.                  |
+|    p_params                       IN      VARCHAR2 listado de parametros     |
+|                                                       de entrada             |
+|    x_number_of_previous_months    OUT     NUMBER   Cantidad de meses previos.|
+|    x_country_code                 OUT     VARCHAR2 Codigo de Pais.           |
+|    x_bu                           OUT     NUMBER    Unidad de Negocio.       |
+|    x_items_group                  OUT     VARCHAR2 Items de Grupo.           |
+|    x_acronyms                     OUT     VARCHAR2 Acronimo.                 |
+|    x_cost_center                  OUT     VARCHAR2 Centro de costos.         |
+|    x_item                         OUT     VARCHAR2 Producto.                 |
+|    x_draft_mode                   OUT     VARCHAR2 Modo borrador.            |
+|    x_return_status                OUT     VARCHAR2 Estado de ejecucion.      |
+|    x_msg_error                    OUT     VARCHAR2 Mensaje de error.         |
+|                                                                              |
++=============================================================================*/
+PROCEDURE get_fla_item_prices_int_params( p_request_id                  IN      VARCHAR2
+                                         ,p_draft_flag                  IN      VARCHAR2
+                                         ,p_debug_flag                  IN      VARCHAR2
+                                         ,p_language                    IN      VARCHAR2
+                                         ,p_user_name                   IN      VARCHAR2
+                                         ,p_params                      IN      VARCHAR2
+                                         ,x_number_of_previous_months   OUT     NUMBER
+                                         ,x_country_code                OUT     VARCHAR2
+                                         ,x_bu                          OUT     NUMBER  
+                                         ,x_items_group                 OUT     VARCHAR2
+                                         ,x_acronyms                    OUT     VARCHAR2
+                                         ,x_cost_center                 OUT     VARCHAR2
+                                         ,x_item                        OUT     VARCHAR2
+                                         ,x_draft_mode                  OUT     VARCHAR2
+                                         ,x_return_status               OUT     VARCHAR2
+                                         ,x_msg_error                   OUT     VARCHAR2
+                                         )
+IS
+  v_calling_sequence            VARCHAR2(2000);
+  v_mesg_error                  VARCHAR2(32767);
+  v_language                    VARCHAR2(4);  
+  
+  v_jo                          JSON_OBJECT_T;
+  v_keys                        JSON_KEY_LIST;
+  v_number_of_previous_months   NUMBER;
+  v_country_code                VARCHAR2(200);
+  v_bu                          NUMBER;
+  v_items_group                 VARCHAR2(200);
+  v_acronyms                    VARCHAR2(200);
+  v_cost_center                 VARCHAR2(200);
+  v_item                        VARCHAR2(200);
+  v_draft_mode                  VARCHAR2(1);
+
+  -- ---------------------------------------------------------------------------
+  -- Declaracion de Cursores.
+  -- ---------------------------------------------------------------------------
+  -- ---------------------------------------------------------------------------
+  -- Cursor de .
+  -- ---------------------------------------------------------------------------
+   --ORIGINAL
+    
+BEGIN
+  -- ---------------------------------------------------------------------------
+  -- Inicializa variables.
+  -- ---------------------------------------------------------------------------
+  v_calling_sequence      := 'XX_FLA_PROPERTY_INIT.GET_FLA_ITEM_PRICES_INT_PARAMS';
+  x_return_status         := 'S';  
+
+  -- ---------------------------------------------------------------------------
+  -- Inicializa datos globales.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );  
+ 
+  IF v_mesg_error IS NULL THEN
+     BEGIN
+       xx_global_pkg.initialize
+         (p_user_name        => p_user_name
+         ,p_language         => p_language
+         ,p_request_id       => NULL
+         ,p_request_phase_id => NULL
+         );
+       g_debug_flag := xx_debug_pkg.g_enabled;
+     EXCEPTION
+       WHEN others THEN
+         v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
+     END;
+  END IF;
+
+  -- ---------------------------------------------------------------------------
+  -- Despliega parametros.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );
+  debug(g_indent                     ||
+        v_calling_sequence           ||
+        '. Nro. del requerimiento: ' ||
+        TO_CHAR(p_request_id)
+       ,'1'
+       );
+  /*debug(g_indent                                ||
+        v_calling_sequence                      ||
+        '. Nro. de requerimiento de la etapa: ' ||
+        TO_CHAR(p_request_phase_id)
+       ,'1'
+       );*/
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Modo borrador: ' ||
+        p_draft_flag
+       ,'1'
+       );
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Flag de debug: ' ||
+        p_debug_flag
+       ,'1'
+       );
+  debug(g_indent                 ||
+        v_calling_sequence       ||
+        '. Codigo de lenguaje: ' ||
+        p_language
+       ,'1'
+       );
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. Usuario: '      ||
+        p_user_name
+       ,'1'
+       );
+       
+  -- ---------------------------------------------------------------------------
+  -- Obtiene codigo de lenguaje.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL THEN
+     v_language := xx_global_pkg.language;
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Codigo de lenguaje seteado: ' ||
+           v_language
+          ,'1'
+          );
+  END IF;
+         
+         
+         
+  -- ---------------------------------------------------------------------------
+  -- Logica del proceso.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL 
+    AND p_params IS NOT NULL
+  THEN
+
+      v_jo      := JSON_OBJECT_T.parse(p_params);
+      v_keys    := v_jo.get_keys;
+      --v_values  := v_jo.get_values;
+      FOR i IN 1..v_keys.COUNT LOOP
+         DBMS_OUTPUT.put_line('Name->' ||v_keys(i));
+         --v_acronyms := v_json_obj.get_string(v_keys(i));
+         DBMS_OUTPUT.put_line('Value->' || v_jo.get_string(v_keys(i)));
+         IF v_keys(i) IS NOT NULL
+         THEN
+
+
+         
+    
+            IF v_mesg_error IS NULL THEN
+
+                IF REPLACE(v_keys(i),'"','') = 'p_number_of_previous_months'
+                THEN
+                    
+                    v_number_of_previous_months  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+                IF REPLACE(v_keys(i),'"','') = 'p_country_code'
+                THEN
+                    
+                    v_country_code  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+                IF REPLACE(v_keys(i),'"','') = 'p_bu'
+                THEN
+                    
+                    v_bu  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+                IF REPLACE(v_keys(i),'"','') = 'p_items_group'
+                THEN
+                    
+                    v_items_group  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+                IF REPLACE(v_keys(i),'"','') = 'p_acronyms'
+                THEN
+                    
+                    v_acronyms  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+                IF REPLACE(v_keys(i),'"','') = 'p_cost_center'
+                THEN
+                    
+                    v_cost_center  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+                IF REPLACE(v_keys(i),'"','') = 'p_item'
+                THEN
+                    
+                    v_item  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+                IF REPLACE(v_keys(i),'"','') = 'p_draft_mode'
+                THEN
+                    
+                    v_draft_mode  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+
+
+            END IF;
+
+
+         END IF;
+
+      END LOOP;
+
+    
+  END IF;
+  
+  
+ 
+
+  -- ---------------------------------------------------------------------------
+  -- Verifica si se produjo un error.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error IS NOT NULL THEN
+     x_return_status := 'E';
+     x_msg_error     := v_mesg_error;
+     debug(g_indent           ||
+           v_calling_sequence ||
+           '. '               ||
+           v_mesg_error
+          ,'1'
+          );
+    ELSE
+
+        x_number_of_previous_months :=  v_number_of_previous_months;
+        x_country_code              :=  v_country_code;
+        x_bu                        :=  v_bu;
+        x_items_group               :=  v_items_group;
+        x_acronyms                  :=  v_acronyms;
+        x_cost_center               :=  v_cost_center;
+        x_item                      :=  v_item;
+        x_draft_mode                :=  v_draft_mode;        
+
+        
+  END IF;
+  -- ---------------------------------------------------------------------------
+  -- Fin del proceso.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (-)'
+       ,'1'
+       );
+EXCEPTION
+  WHEN others THEN
+    v_mesg_error := v_calling_sequence  ||
+                    message('XX_FLA_PROPERTY_GEN',SQLERRM);
+    debug(g_indent           ||
+          v_calling_sequence ||
+          '. '               ||
+          v_mesg_error
+         ,'1'
+         );
+    debug(g_indent           ||
+          v_calling_sequence ||
+          ' (-)'
+         ,'1'
+         );
+    x_return_status := 'E';
+    x_msg_error     := v_mesg_error;
+
+END get_fla_item_prices_int_params;
+                                         
+                                         
+
+
+/*=============================================================================+
+|                                                                              |
+| Public Procedure                                                             |
+|    GET_FLA_INDEX_HIST_LINES_INT_PARAMS                                       |
+|                                                                              |
+| Description                                                                  |
+|    (descripcion del procedimiento)                                           |
+|                                                                              |
+| Parameters                                                                   |
+|    p_request_id                   IN      VARCHAR2 Nro. del requerimiento.   |
+|    p_draft_flag                   IN      VARCHAR2 Modo borrador.            |
+|    p_debug_flag                   IN      VARCHAR2 Flag de debug.            |
+|    p_language                     IN      VARCHAR2 Codigo de lenguaje.       |
+|    p_user_name                    IN      VARCHAR2 Usuario.                  |
+|    p_params                       IN      VARCHAR2 listado de parametros     |
+|                                                       de entrada             |
+|    x_year                         OUT     VARCHAR2 Año.                      |
+|    x_index_name                   OUT     VARCHAR2 Tipo de indice.           |
+|    x_draft_mode                   OUT     VARCHAR2 Modo borrador.            |
+|    x_return_status                OUT     VARCHAR2 Estado de ejecucion.      |
+|    x_msg_error                    OUT     VARCHAR2 Mensaje de error.         |
+|                                                                              |
++=============================================================================*/
+PROCEDURE get_fla_index_hist_lines_int_params( p_request_id         IN      VARCHAR2
+                                              ,p_draft_flag         IN      VARCHAR2
+                                              ,p_debug_flag         IN      VARCHAR2
+                                              ,p_language           IN      VARCHAR2
+                                              ,p_user_name          IN      VARCHAR2
+                                              ,p_params             IN      VARCHAR2
+                                              ,x_year               OUT     VARCHAR2
+                                              ,x_index_name         OUT     VARCHAR2
+                                              ,x_draft_mode         OUT     VARCHAR2
+                                              ,x_return_status      OUT     VARCHAR2
+                                              ,x_msg_error          OUT     VARCHAR2
+                                              )
+IS
+  v_calling_sequence            VARCHAR2(2000);
+  v_mesg_error                  VARCHAR2(32767);
+  v_language                    VARCHAR2(4);  
+  
+  v_jo                          JSON_OBJECT_T;
+  v_keys                        JSON_KEY_LIST;
+  v_year                        VARCHAR2(10);
+  v_index_name                  VARCHAR2(200);
+  v_draft_mode                  VARCHAR2(1);
+
+  -- ---------------------------------------------------------------------------
+  -- Declaracion de Cursores.
+  -- ---------------------------------------------------------------------------
+  -- ---------------------------------------------------------------------------
+  -- Cursor de .
+  -- ---------------------------------------------------------------------------
+   --ORIGINAL
+    
+BEGIN
+  -- ---------------------------------------------------------------------------
+  -- Inicializa variables.
+  -- ---------------------------------------------------------------------------
+  v_calling_sequence      := 'XX_FLA_PROPERTY_INIT.GET_FLA_INDEX_HISTORY_INT_PARAMS';
+  x_return_status         := 'S';  
+
+  -- ---------------------------------------------------------------------------
+  -- Inicializa datos globales.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );  
+ 
+  IF v_mesg_error IS NULL THEN
+     BEGIN
+       xx_global_pkg.initialize
+         (p_user_name        => p_user_name
+         ,p_language         => p_language
+         ,p_request_id       => NULL
+         ,p_request_phase_id => NULL
+         );
+       g_debug_flag := xx_debug_pkg.g_enabled;
+     EXCEPTION
+       WHEN others THEN
+         v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
+     END;
+  END IF;
+
+  -- ---------------------------------------------------------------------------
+  -- Despliega parametros.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );
+  debug(g_indent                     ||
+        v_calling_sequence           ||
+        '. Nro. del requerimiento: ' ||
+        TO_CHAR(p_request_id)
+       ,'1'
+       );
+  /*debug(g_indent                                ||
+        v_calling_sequence                      ||
+        '. Nro. de requerimiento de la etapa: ' ||
+        TO_CHAR(p_request_phase_id)
+       ,'1'
+       );*/
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Modo borrador: ' ||
+        p_draft_flag
+       ,'1'
+       );
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Flag de debug: ' ||
+        p_debug_flag
+       ,'1'
+       );
+  debug(g_indent                 ||
+        v_calling_sequence       ||
+        '. Codigo de lenguaje: ' ||
+        p_language
+       ,'1'
+       );
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. Usuario: '      ||
+        p_user_name
+       ,'1'
+       );
+       
+  -- ---------------------------------------------------------------------------
+  -- Obtiene codigo de lenguaje.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL THEN
+     v_language := xx_global_pkg.language;
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Codigo de lenguaje seteado: ' ||
+           v_language
+          ,'1'
+          );
+  END IF;
+         
+         
+         
+  -- ---------------------------------------------------------------------------
+  -- Logica del proceso.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL 
+    AND p_params IS NOT NULL
+  THEN
+
+      v_jo      := JSON_OBJECT_T.parse(p_params);
+      v_keys    := v_jo.get_keys;
+      --v_values  := v_jo.get_values;
+      FOR i IN 1..v_keys.COUNT LOOP
+         DBMS_OUTPUT.put_line('Name->' ||v_keys(i));
+         --v_acronyms := v_json_obj.get_string(v_keys(i));
+         DBMS_OUTPUT.put_line('Value->' || v_jo.get_string(v_keys(i)));
+         IF v_keys(i) IS NOT NULL
+         THEN
+
+
+         
+    
+            IF v_mesg_error IS NULL THEN
+
+                IF REPLACE(v_keys(i),'"','') = 'p_year'
+                THEN
+                    
+                    v_year  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+                IF REPLACE(v_keys(i),'"','') = 'p_index_name'
+                THEN
+                    
+                    v_index_name  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+
+                IF REPLACE(v_keys(i),'"','') = 'p_draft_mode'
+                THEN
+                    
+                    v_draft_mode  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+
+
+            END IF;
+
+
+         END IF;
+
+      END LOOP;
+
+    
+  END IF;
+  
+  
+ 
+
+  -- ---------------------------------------------------------------------------
+  -- Verifica si se produjo un error.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error IS NOT NULL THEN
+     x_return_status := 'E';
+     x_msg_error     := v_mesg_error;
+     debug(g_indent           ||
+           v_calling_sequence ||
+           '. '               ||
+           v_mesg_error
+          ,'1'
+          );
+    ELSE
+
+        x_year                      :=  v_year;
+        x_index_name                :=  v_index_name;
+        x_draft_mode                :=  v_draft_mode;        
+
+        
+  END IF;
+  -- ---------------------------------------------------------------------------
+  -- Fin del proceso.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (-)'
+       ,'1'
+       );
+EXCEPTION
+  WHEN others THEN
+    v_mesg_error := v_calling_sequence  ||
+                    message('XX_FLA_PROPERTY_GEN',SQLERRM);
+    debug(g_indent           ||
+          v_calling_sequence ||
+          '. '               ||
+          v_mesg_error
+         ,'1'
+         );
+    debug(g_indent           ||
+          v_calling_sequence ||
+          ' (-)'
+         ,'1'
+         );
+    x_return_status := 'E';
+    x_msg_error     := v_mesg_error;
+
+END get_fla_index_hist_lines_int_params;
+                                         
+/*=============================================================================+
+|                                                                              |
+| Public Procedure                                                             |
+|    GET_FLA_SALES_INT_PARAMS                                                  |
+|                                                                              |
+| Description                                                                  |
+|    (descripcion del procedimiento)                                           |
+|                                                                              |
+| Parameters                                                                   |
+|    p_request_id           IN      VARCHAR2 Nro. del requerimiento.           |
+|    p_draft_flag           IN      VARCHAR2 Modo borrador.                    |
+|    p_debug_flag           IN      VARCHAR2 Flag de debug.                    |
+|    p_language             IN      VARCHAR2 Codigo de lenguaje.               |
+|    p_user_name            IN      VARCHAR2 Usuario.                          |
+|    p_params               IN      VARCHAR2 listado de parametros de entrada  |
+|    x_country_code         OUT     VARCHAR2 codigo de pais.                   |
+|    x_init_date            OUT     VARCHAR2 Fecha de inicio.                  |
+|    x_end_date             OUT     VARCHAR2 Fecha de fin.                     |
+|    x_draft_mode           OUT     VARCHAR2 Modo Borrador.                    |
+|    x_return_status        OUT     VARCHAR2 Estado de ejecucion.              |
+|    x_msg_error            OUT     VARCHAR2 Mensaje de error.                 |
+|                                                                              |
++=============================================================================*/
+PROCEDURE get_fla_sales_int_params(p_request_id            IN      VARCHAR2
+                                  ,p_draft_flag            IN      VARCHAR2
+                                  ,p_debug_flag            IN      VARCHAR2
+                                  ,p_language              IN      VARCHAR2
+                                  ,p_user_name             IN      VARCHAR2
+                                  ,p_params                IN      VARCHAR2
+                                  ,x_country_code          OUT     VARCHAR2
+                                  ,x_init_date             OUT     VARCHAR2
+                                  ,x_end_date              OUT     VARCHAR2
+                                  ,x_draft_mode            OUT     VARCHAR2
+                                  ,x_return_status         OUT     VARCHAR2
+                                  ,x_msg_error             OUT     VARCHAR2
+                                  )
+IS
+  v_calling_sequence        VARCHAR2(2000);
+  v_mesg_error              VARCHAR2(32767);
+  v_language                VARCHAR2(4);  
+  
+  v_jo                      JSON_OBJECT_T;
+  v_keys                    JSON_KEY_LIST;
+  v_country_code            VARCHAR2(100);
+  v_init_date               VARCHAR(25);
+  v_end_date                VARCHAR(25);
+  v_draft_mode              VARCHAR2(1);
+
+  -- ---------------------------------------------------------------------------
+  -- Declaracion de Cursores.
+  -- ---------------------------------------------------------------------------
+
+    
+BEGIN
+  -- ---------------------------------------------------------------------------
+  -- Inicializa variables.
+  -- ---------------------------------------------------------------------------
+  v_calling_sequence      := 'XX_FLA_PROPERTY_INIT.GET_FLA_SALES_INT_PARAMS';
+  x_return_status         := 'S';  
+
+  -- ---------------------------------------------------------------------------
+  -- Inicializa datos globales.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );  
+ 
+  IF v_mesg_error IS NULL THEN
+     BEGIN
+       xx_global_pkg.initialize
+         (p_user_name        => p_user_name
+         ,p_language         => p_language
+         ,p_request_id       => NULL
+         ,p_request_phase_id => NULL
+         );
+       g_debug_flag := xx_debug_pkg.g_enabled;
+     EXCEPTION
+       WHEN others THEN
+         v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
+     END;
+  END IF;
+
+  -- ---------------------------------------------------------------------------
+  -- Despliega parametros.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );
+  debug(g_indent                     ||
+        v_calling_sequence           ||
+        '. Nro. del requerimiento: ' ||
+        TO_CHAR(p_request_id)
+       ,'1'
+       );
+  /*debug(g_indent                                ||
+        v_calling_sequence                      ||
+        '. Nro. de requerimiento de la etapa: ' ||
+        TO_CHAR(p_request_phase_id)
+       ,'1'
+       );*/
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Modo borrador: ' ||
+        p_draft_flag
+       ,'1'
+       );
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Flag de debug: ' ||
+        p_debug_flag
+       ,'1'
+       );
+  debug(g_indent                 ||
+        v_calling_sequence       ||
+        '. Codigo de lenguaje: ' ||
+        p_language
+       ,'1'
+       );
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. Usuario: '      ||
+        p_user_name
+       ,'1'
+       );
+       
+  -- ---------------------------------------------------------------------------
+  -- Obtiene codigo de lenguaje.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL THEN
+     v_language := xx_global_pkg.language;
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Codigo de lenguaje seteado: ' ||
+           v_language
+          ,'1'
+          );
+  END IF;
+         
+         
+         
+  -- ---------------------------------------------------------------------------
+  -- Logica del proceso.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL 
+    AND p_params IS NOT NULL
+  THEN
+
+      v_jo      := JSON_OBJECT_T.parse(p_params);
+      v_keys    := v_jo.get_keys;
+      --v_values  := v_jo.get_values;
+      FOR i IN 1..v_keys.COUNT LOOP
+         DBMS_OUTPUT.put_line('Name->' ||v_keys(i));
+         --v_acronyms := v_json_obj.get_string(v_keys(i));
+         DBMS_OUTPUT.put_line('Value->' || v_jo.get_string(v_keys(i)));
+         IF v_keys(i) IS NOT NULL
+         THEN
+
+
+         
+    
+            IF v_mesg_error IS NULL THEN
+       
+                IF REPLACE(v_keys(i),'"','') = 'p_country_code'
+                THEN
+                    
+                    v_country_code  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. p_country_code: '      ||
+        v_country_code
+       ,'1'
+       );
+                    
+                END IF;
+
+
+                IF REPLACE(v_keys(i),'"','') = 'p_init_date'
+                THEN
+                    
+                    v_init_date  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. p_init_date: '      ||
+        v_init_date
+       ,'1'
+       );
+                END IF;
+
+                IF REPLACE(v_keys(i),'"','') = 'p_end_date'
+                THEN
+                    
+                    v_end_date  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. p_end_date: '      ||
+        v_end_date
+       ,'1'
+       );
+                    
+                END IF;
+
+
+                IF REPLACE(v_keys(i),'"','') = 'p_draft_mode'
+                THEN
+                    
+                    v_draft_mode  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. p_draft_mode: '      ||
+        v_end_date
+       ,'1'
+       );
+                    
+                END IF;
+
+
+            END IF;
+
+
+         END IF;
+
+      END LOOP;
+
+    
+  END IF;
+  
+  
+ 
+
+  -- ---------------------------------------------------------------------------
+  -- Verifica si se produjo un error.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error IS NOT NULL THEN
+     x_return_status := 'E';
+     x_msg_error     := v_mesg_error;
+     debug(g_indent           ||
+           v_calling_sequence ||
+           '. '               ||
+           v_mesg_error
+          ,'1'
+          );
+    ELSE
+      
+        x_draft_mode    :=  v_draft_mode;        
+        x_init_date     :=  v_init_date;        
+        x_end_date      :=  v_end_date;        
+        x_country_code  :=  v_country_code;
+        
+  END IF;
+  -- ---------------------------------------------------------------------------
+  -- Fin del proceso.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (-)'
+       ,'1'
+       );
+EXCEPTION
+  WHEN others THEN
+    v_mesg_error := v_calling_sequence  ||
+                    message('XX_FLA_PROPERTY_GEN',SQLERRM);
+    debug(g_indent           ||
+          v_calling_sequence ||
+          '. '               ||
+          v_mesg_error
+         ,'1'
+         );
+    debug(g_indent           ||
+          v_calling_sequence ||
+          ' (-)'
+         ,'1'
+         );
+    x_return_status := 'E';
+    x_msg_error     := v_mesg_error;
+
+END get_fla_sales_int_params;
+
+
+/*=============================================================================+
+|                                                                              |
+| Public Procedure                                                             |
+|    GET_FLA_SALES_TAXES_INT_PARAMS                                                  |
+|                                                                              |
+| Description                                                                  |
+|    (descripcion del procedimiento)                                           |
+|                                                                              |
+| Parameters                                                                   |
+|    p_request_id           IN      VARCHAR2 Nro. del requerimiento.           |
+|    p_draft_flag           IN      VARCHAR2 Modo borrador.                    |
+|    p_debug_flag           IN      VARCHAR2 Flag de debug.                    |
+|    p_language             IN      VARCHAR2 Codigo de lenguaje.               |
+|    p_user_name            IN      VARCHAR2 Usuario.                          |
+|    p_params               IN      VARCHAR2 listado de parametros de entrada  |
+|    x_country_code         OUT     VARCHAR2 codigo de pais.                   |
+|    x_init_date            OUT     VARCHAR2 Fecha de inicio.                  |
+|    x_end_date             OUT     VARCHAR2 Fecha de fin.                     |
+|    x_draft_mode           OUT     VARCHAR2 Modo Borrador.                    |
+|    x_return_status        OUT     VARCHAR2 Estado de ejecucion.              |
+|    x_msg_error            OUT     VARCHAR2 Mensaje de error.                 |
+|                                                                              |
++=============================================================================*/
+PROCEDURE get_fla_sales_taxes_int_params( p_request_id            IN      VARCHAR2
+                                         ,p_draft_flag            IN      VARCHAR2
+                                         ,p_debug_flag            IN      VARCHAR2
+                                         ,p_language              IN      VARCHAR2
+                                         ,p_user_name             IN      VARCHAR2
+                                         ,p_params                IN      VARCHAR2
+                                         ,x_country_code          OUT     VARCHAR2
+                                         ,x_init_date             OUT     VARCHAR2
+                                         ,x_end_date              OUT     VARCHAR2
+                                         ,x_draft_mode            OUT     VARCHAR2
+                                         ,x_return_status         OUT     VARCHAR2
+                                         ,x_msg_error             OUT     VARCHAR2
+                                         )
+IS
+  v_calling_sequence        VARCHAR2(2000);
+  v_mesg_error              VARCHAR2(32767);
+  v_language                VARCHAR2(4);  
+  
+  v_jo                      JSON_OBJECT_T;
+  v_keys                    JSON_KEY_LIST;
+  v_country_code            VARCHAR2(100);
+  v_init_date               VARCHAR2(25);
+  v_end_date                VARCHAR2(25);
+  v_draft_mode              VARCHAR2(1);
+
+  -- ---------------------------------------------------------------------------
+  -- Declaracion de Cursores.
+  -- ---------------------------------------------------------------------------
+  -- ---------------------------------------------------------------------------
+  -- Cursor de .
+  -- ---------------------------------------------------------------------------
+   --ORIGINAL
+    
+BEGIN
+  -- ---------------------------------------------------------------------------
+  -- Inicializa variables.
+  -- ---------------------------------------------------------------------------
+  v_calling_sequence      := 'XX_FLA_PROPERTY_INIT.GET_FLA_SALES_TAXES_INT_PARAMS';
+  x_return_status         := 'S';  
+
+  -- ---------------------------------------------------------------------------
+  -- Inicializa datos globales.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );  
+ 
+  IF v_mesg_error IS NULL THEN
+     BEGIN
+       xx_global_pkg.initialize
+         (p_user_name        => p_user_name
+         ,p_language         => p_language
+         ,p_request_id       => NULL
+         ,p_request_phase_id => NULL
+         );
+       g_debug_flag := xx_debug_pkg.g_enabled;
+     EXCEPTION
+       WHEN others THEN
+         v_mesg_error := message('XX_FLA_PROPERTY_INIT',SQLERRM);
+     END;
+  END IF;
+
+  -- ---------------------------------------------------------------------------
+  -- Despliega parametros.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (+)'
+       ,'1'
+       );
+  debug(g_indent                     ||
+        v_calling_sequence           ||
+        '. Nro. del requerimiento: ' ||
+        TO_CHAR(p_request_id)
+       ,'1'
+       );
+  /*debug(g_indent                                ||
+        v_calling_sequence                      ||
+        '. Nro. de requerimiento de la etapa: ' ||
+        TO_CHAR(p_request_phase_id)
+       ,'1'
+       );*/
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Modo borrador: ' ||
+        p_draft_flag
+       ,'1'
+       );
+  debug(g_indent            ||
+        v_calling_sequence  ||
+        '. Flag de debug: ' ||
+        p_debug_flag
+       ,'1'
+       );
+  debug(g_indent                 ||
+        v_calling_sequence       ||
+        '. Codigo de lenguaje: ' ||
+        p_language
+       ,'1'
+       );
+  debug(g_indent           ||
+        v_calling_sequence ||
+        '. Usuario: '      ||
+        p_user_name
+       ,'1'
+       );
+       
+  -- ---------------------------------------------------------------------------
+  -- Obtiene codigo de lenguaje.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL THEN
+     v_language := xx_global_pkg.language;
+     debug(g_indent                         ||
+           v_calling_sequence               ||
+           '. Codigo de lenguaje seteado: ' ||
+           v_language
+          ,'1'
+          );
+  END IF;
+         
+         
+         
+  -- ---------------------------------------------------------------------------
+  -- Logica del proceso.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error  IS NULL 
+    AND p_params IS NOT NULL
+  THEN
+
+      v_jo      := JSON_OBJECT_T.parse(p_params);
+      v_keys    := v_jo.get_keys;
+      --v_values  := v_jo.get_values;
+      FOR i IN 1..v_keys.COUNT LOOP
+         DBMS_OUTPUT.put_line('Name->' ||v_keys(i));
+         --v_acronyms := v_json_obj.get_string(v_keys(i));
+         DBMS_OUTPUT.put_line('Value->' || v_jo.get_string(v_keys(i)));
+         IF v_keys(i) IS NOT NULL
+         THEN
+
+
+         
+    
+            IF v_mesg_error IS NULL THEN
+
+                IF REPLACE(v_keys(i),'"','') = 'p_country_code'
+                THEN
+                    
+                    v_country_code  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+                IF REPLACE(v_keys(i),'"','') = 'p_init_date'
+                THEN
+                    
+                    v_init_date  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+                IF REPLACE(v_keys(i),'"','') = 'p_end_date'
+                THEN
+                    
+                    v_end_date  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+                IF REPLACE(v_keys(i),'"','') = 'p_draft_mode'
+                THEN
+                    
+                    v_draft_mode  :=  REPLACE(v_jo.get_string(v_keys(i)),'"','');
+                    
+                END IF;
+
+
+            END IF;
+
+
+         END IF;
+
+      END LOOP;
+
+    
+  END IF;
+  
+  
+ 
+
+  -- ---------------------------------------------------------------------------
+  -- Verifica si se produjo un error.
+  -- ---------------------------------------------------------------------------
+  IF v_mesg_error IS NOT NULL THEN
+     x_return_status := 'E';
+     x_msg_error     := v_mesg_error;
+     debug(g_indent           ||
+           v_calling_sequence ||
+           '. '               ||
+           v_mesg_error
+          ,'1'
+          );
+    ELSE
+      
+        x_draft_mode    :=  v_draft_mode;        
+        x_init_date     :=  v_init_date;        
+        x_end_date      :=  v_end_date;        
+        x_country_code  :=  v_country_code;
+        
+  END IF;
+  -- ---------------------------------------------------------------------------
+  -- Fin del proceso.
+  -- ---------------------------------------------------------------------------
+  debug(g_indent           ||
+        v_calling_sequence ||
+        ' (-)'
+       ,'1'
+       );
+EXCEPTION
+  WHEN others THEN
+    v_mesg_error := v_calling_sequence  ||
+                    message('XX_FLA_PROPERTY_GEN',SQLERRM);
+    debug(g_indent           ||
+          v_calling_sequence ||
+          '. '               ||
+          v_mesg_error
+         ,'1'
+         );
+    debug(g_indent           ||
+          v_calling_sequence ||
+          ' (-)'
+         ,'1'
+         );
+    x_return_status := 'E';
+    x_msg_error     := v_mesg_error;
+
+END get_fla_sales_taxes_int_params;
+
+
+
+
 /*=========================================================================+
 |                                                                          |
 | Public Procedure                                                         |
@@ -2168,10 +3524,6 @@ END wrap_get_countries_json;
 |    p_init_date        IN      DATE Fecha inicio.                         |
 |    p_end_date         IN      DATE Fecha Fin.                            |
 |    x_items            OUT     XX_FLA_SALES_COUNTRIES_T Listado de paises.|
-|    x_sales_str        OUT     XX_FLA_SALES_UNIQUE_REPORT_T               | 
-|                                           Listado de registros resultado.|
-|    x_sales_taxes_str  OUT     XX_FLA_SALES_TAXES_UNIQUE_REPORT_T         | 
-|                                           Listado de registros resultado.|
 |    x_return_status    OUT     VARCHAR2 Estado de ejecucion.              |
 |    x_msg_error        OUT     VARCHAR2 Mensaje de error.                 |
 |                                                                          |
@@ -2186,8 +3538,6 @@ PROCEDURE get_sales_countries(p_request_id       IN      NUMBER
                              ,p_init_date        IN      DATE
                              ,p_end_date         IN      DATE
                              ,x_items            OUT     XX_FLA_SALES_COUNTRIES_T
-                             ,x_sales_str        OUT     XX_FLA_SALES_UNIQUE_REPORT_T
-                             ,x_sales_taxes_str  OUT     XX_FLA_SALES_TAXES_UNIQUE_REPORT_T
                              ,x_return_status    OUT     VARCHAR2
                              ,x_msg_error        OUT     VARCHAR2
                              )
@@ -2220,6 +3570,7 @@ IS
                                  )
        AND TRUNC(xpc.sales_last_date) BETWEEN TRUNC(NVL(p_init_date,xpc.sales_last_date)) AND TRUNC(NVL(p_end_date,xpc.sales_last_date))
        AND xpc.enabled_flag = 'Y'
+       --AND ROWNUM = 1
      ORDER BY
            xpc.country_code;
            
@@ -2378,12 +3729,16 @@ BEGIN
         --Sales         
          --v_sale_date        := TRUNC(r_country.sales_last_date + 485);
          --v_sale_date_to     := TRUNC(SYSDATE - 760);
+         --v_sale_date_to     := TRUNC(r_country.sales_last_date + 485);
+        --v_sale_date        := TRUNC(r_country.sales_last_date);
+        --v_sale_date_to     := TRUNC(r_country.sales_last_date);
         --Sales_taxes
-         v_sale_date        := TRUNC(r_country.sales_last_date + 1240);
-         v_sale_date_to     := TRUNC(SYSDATE);
-        --Original
-         --v_sale_date        := TRUNC(r_country.sales_last_date);
+         --v_sale_date        := TRUNC(r_country.sales_last_date + 1240);
+         --v_sale_date_to     := TRUNC(r_country.sales_last_date + 1240);
          --v_sale_date_to     := TRUNC(SYSDATE);
+        --Original
+         v_sale_date        := TRUNC(r_country.sales_last_date);
+         v_sale_date_to     := TRUNC(SYSDATE);
 
 
          --v_cnt_day          := 1;
@@ -2630,7 +3985,7 @@ BEGIN
               -- ---------------------------------------------------------------------------
               v_item_id  :=     -1;
               IF v_mesg_error IS NULL 
-                 AND NVL(p_draft_flag,'Y') = 'N'
+                 --AND NVL(p_draft_flag,'Y') = 'N'
               THEN
 
                     get_item( 
@@ -2691,19 +4046,19 @@ BEGIN
                                                    ,p_items(i).item_code
                                                    ,p_items(i).description
                                                    ,p_items(i).enabled_flag
-                                                   ,NVL(p_items(i).request_id,-1)
+                                                   ,-1
                                                    ,SYSDATE
-                                                   ,NVL(p_user_name,-1)
+                                                   ,NVL(p_user_name,'-1')
                                                    ,SYSDATE
-                                                   ,NVL(p_user_name,-1)
+                                                   ,NVL(p_user_name,'-1')
                                         );
                         
                         
                             EXCEPTION
                             
                                 WHEN OTHERS THEN
-                                    v_mesg_error := message('XX_FLA_ITEMS_INSERT',SQLERRM);
-                                    --v_mesg_error := SQLERRM;
+                                    --v_mesg_error := message('XX_FLA_ITEMS_INSERT',SQLERRM);
+                                    v_mesg_error := SQLERRM;
                         END;
     
                   END IF;
@@ -2737,9 +4092,9 @@ BEGIN
                                 ,item_code          =   p_items(i).item_code
                                 ,description        =   p_items(i).description
                                 ,enabled_flag       =   p_items(i).enabled_flag
-                                ,request_id         =   NVL(p_items(i).request_id,-1)
+                                --,request_id         =   NVL(p_items(i).request_id,-1)
                                 ,last_update_date   =   SYSDATE
-                                ,last_updated_by    =   NVL(p_user_name,-1)
+                                ,last_updated_by    =   NVL(p_user_name,'-1')
                             WHERE 1 = 1
                             AND item_id = v_item_id;
                         
@@ -2981,14 +4336,28 @@ BEGIN
     
             -- Crear un objeto XX_FLA_ITEM_O y poblar sus campos desde el JSON
             DECLARE
-                v_item XX_FLA_ITEM_O;
+                v_item          XX_FLA_ITEM_O;
+                v_enable_flag   VARCHAR2(1);
             BEGIN
             
+
+                                     
+            
+                IF NVL(v_req_obj.get_string('param4'),'N') = 'S'
+                THEN
+                    v_enable_flag   :=  'Y';
+                        ELSE
+                    v_enable_flag   :=  'N';
+                END IF;
+
+
+
+                
                 v_item := XX_FLA_ITEM_O(NULL
                                             ,v_req_obj.get_string('param1') --country_code
                                             ,v_req_obj.get_string('param2') --item_code
                                             ,v_req_obj.get_string('param3') --description
-                                            ,v_req_obj.get_string('param4') --enabled_flag
+                                            ,v_enable_flag --enabled_flag
                                             ,NULL);
                 v_items_in.EXTEND;
                 v_items_in(v_items_in.LAST) := v_item;
@@ -3330,6 +4699,7 @@ PROCEDURE create_update_sales(p_request_id       IN      NUMBER
 IS
   v_calling_sequence        VARCHAR2(2000);
   v_mesg_error              VARCHAR2(32767);
+  v_process_mesg            VARCHAR2(32767);
   v_language                VARCHAR2(4);  
   v_item                    XX_FLA_SALE_O;
   v_items                   XX_FLA_SALES_T;  
@@ -3446,6 +4816,8 @@ BEGIN
     
     FOR i IN 1 .. p_items.COUNT LOOP      
 
+    v_process_mesg  :=  NULL;
+    
     IF v_mesg_error IS NULL
     THEN
       debug(g_indent                                ||
@@ -3507,7 +4879,7 @@ BEGIN
                              ,p_items(i).entity_type
                              ,v_sale_id
                              ,v_sale_found
-                             ,v_mesg_error
+                             ,v_process_mesg
                             );                
                 
               END IF;
@@ -3679,7 +5051,7 @@ BEGIN
                             
                                 WHEN OTHERS THEN
                             
-                                    v_mesg_error := message('XX_FLA_SALES_INSERT',SQLERRM);
+                                    v_process_mesg := message('XX_FLA_SALES_INSERT',SQLERRM) || v_process_mesg;
                         END;
     
                   END IF;
@@ -3765,7 +5137,7 @@ BEGIN
                             
                                 WHEN OTHERS THEN
                             
-                                    v_mesg_error := message('XX_FLA_SALES_UPDATE',SQLERRM);
+                                    v_process_mesg := message('XX_FLA_SALES_UPDATE',SQLERRM) || v_process_mesg;
                         END;
     
                   END IF;
@@ -3834,6 +5206,7 @@ BEGIN
                                     ,p_items(i).adj_approved_date
                                     ,p_items(i).adj_approved_by
                                     ,p_items(i).request_id
+                                    ,v_process_mesg
                                    ); 
 
 
@@ -4035,6 +5408,7 @@ PROCEDURE create_update_sales_taxes( p_request_id       IN      NUMBER
 IS
   v_calling_sequence        VARCHAR2(2000);
   v_mesg_error              VARCHAR2(32767);
+  v_process_mesg            VARCHAR2(32767);
   v_language                VARCHAR2(4);  
   v_item                    XX_FLA_SALE_TAXES_O;
   v_items                   XX_FLA_SALES_TAXES_T;
@@ -4169,6 +5543,8 @@ BEGIN
      AND p_sales_taxes.COUNT  > 0 THEN
     
     FOR i IN 1 .. p_sales_taxes.COUNT LOOP      
+    
+    v_process_mesg  :=  NULL;
 
 
 
@@ -4234,7 +5610,7 @@ IF v_mesg_error  IS NULL
                                      ,p_sales_taxes(i).tax_name
                                      ,v_sale_id
                                      ,v_sale_found
-                                     ,v_mesg_error
+                                     ,v_process_mesg
                                     );                
                 
               END IF;
@@ -4299,7 +5675,7 @@ IF v_mesg_error  IS NULL
                             
                                 WHEN OTHERS THEN
                             
-                                    v_mesg_error := message('XX_FLA_SALES_TAXES_INSERT',SQLERRM);
+                                    v_process_mesg := message('XX_FLA_SALES_TAXES_INSERT',SQLERRM) || v_process_mesg;
                         END;
     
                   END IF;
@@ -4349,7 +5725,7 @@ IF v_mesg_error  IS NULL
                             
                                 WHEN OTHERS THEN
                             
-                                    v_mesg_error := message('XX_FLA_SALES_TAXES_UPDATE',SQLERRM);
+                                    v_process_mesg := message('XX_FLA_SALES_TAXES_UPDATE',SQLERRM) || v_process_mesg;
                         END;
     
                   END IF;
@@ -4382,6 +5758,7 @@ IF v_mesg_error  IS NULL
                                     ,p_sales_taxes(i).percentage
                                     ,p_sales_taxes(i).calculation_basis
                                     ,p_sales_taxes(i).amount
+                                    ,v_process_mesg
                                    ); 
 
         v_items.EXTEND;
