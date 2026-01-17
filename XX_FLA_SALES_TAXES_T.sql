@@ -1,4 +1,4 @@
-/* $Header: XX_FLA_SALES_TAXES_T.sql 11.1.1111.0 2025/05/26 12:00:00 iloaiza noship $ */
+/* $Header: XX_FLA_SALES_TAXES_T.sql 11.1.1111.0 2025/08/13 12:00:00 iloaiza noship $ */
 REM +=======================================================================+
 REM |    Copyright (c) 1997 Oracle Argentina, Buenos Aires                  |
 REM |                         All rights reserved.                          |
@@ -16,7 +16,7 @@ REM | PRODUCT                                                               |
 REM |    Oracle Cloud                                                       |
 REM |                                                                       |
 REM | HISTORY                                                               |
-REM |    21-APR-25  iloaiza       Created                                   |
+REM |    13-AUG-25  iloaiza       Created                                   |
 REM |                                                                       |
 REM | NOTES                                                                 |
 REM |                                                                       |
@@ -52,6 +52,7 @@ CREATE OR REPLACE TYPE xx_fla_sale_taxes_o AS OBJECT
 ,percentage    	    NUMBER
 ,calculation_basis  NUMBER
 ,amount    	    NUMBER
+,error_msg	    VARCHAR2(4000)
 )
 ;
 /

@@ -4,7 +4,7 @@ REM |    Copyright (c) 1997 Oracle Argentina, Buenos Aires                  |
 REM |                         All rights reserved.                          |
 REM +=======================================================================+
 REM | FILENAME                                                              |
-REM |    XX_FLA_COMMON_INT_SETPS.sql                                                   |
+REM |    XX_FLA_COMMON_INT_SETPS.sql                                        |
 REM |                                                                       |
 REM | DESCRIPTION                                                           |
 REM |    Create tables and indexes.                                         |
@@ -40,10 +40,13 @@ CREATE TABLE xx_fla_common_int_steps (
  step_id            NUMBER
 ,integration_code   VARCHAR2(150)
 ,step		    NUMBER
-,step_type          VARCHAR2(40)    -- REST / PL/SQL / FILE / MAIL
+,step_type          VARCHAR2(40)    -- REST / PL/SQL / FILE / REPORT
 ,step_object        VARCHAR2(2000)
 ,msg_type           VARCHAR2(20) --QUERY / PAYLOAD 
+,root_item          VARCHAR2(100) 
 ,enabled_flag       VARCHAR2(1)
+,to_mails	    VARCHAR2(4000)
+,to_subject	    VARCHAR2(500)
 ,creation_date      DATE
 ,created_by         VARCHAR2(256)
 ,last_update_date   DATE

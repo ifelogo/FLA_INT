@@ -42,7 +42,7 @@ CREATE OR REPLACE TYPE xx_fla_item_o AS OBJECT
 (
  item_id            NUMBER
 ,country_code       VARCHAR2(150)
-,item_code          NUMBER
+,item_code          VARCHAR2(30)
 ,description        VARCHAR2(2000)
 ,enabled_flag       VARCHAR2(1)
 ,request_id         NUMBER

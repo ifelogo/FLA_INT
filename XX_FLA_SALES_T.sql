@@ -88,6 +88,7 @@ CREATE OR REPLACE TYPE xx_fla_sale_o AS OBJECT
 ,adj_approved_date		DATE
 ,adj_approved_by		VARCHAR(100)
 ,request_id			NUMBER(15)
+,error_msg			VARCHAR2(4000)
 )
 ;
 /

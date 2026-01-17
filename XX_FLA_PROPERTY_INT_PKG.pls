@@ -56,6 +56,7 @@ PROCEDURE get_items_groups(p_request_id        IN     NUMBER
                           ,x_msg_error         OUT    VARCHAR2
                           );
 
+
 /*=========================================================================+
 |                                                                          |
 | Public Procedure                                                         |
@@ -100,6 +101,38 @@ PROCEDURE create_update_item_prices(p_request_id       IN      NUMBER
 |    (descripcion del procedimiento)                                       |
 |                                                                          |
 | Parameters                                                               |
+|    p_request_id       IN      VARCHAR2   Nro. del requerimiento.         |
+|    p_draft_flag       IN      VARCHAR2 Modo borrador.                    |
+|    p_debug_flag       IN      VARCHAR2 Flag de debug.                    |
+|    p_language         IN      VARCHAR2 Codigo de lenguaje.               |
+|    p_user_name        IN      VARCHAR2 Usuario.                          |
+|    p_items            IN      XX_FLA_ITEMS_T Listado de items.           |
+|    x_items            OUT     XX_FLA_ITEMS_T Listado de items.           |
+|    x_return_status    OUT     VARCHAR2 Estado de ejecucion.              |
+|    x_msg_error        OUT     VARCHAR2 Mensaje de error.                 |
+|                                                                          |
++=========================================================================*/
+PROCEDURE create_update_items(p_request_id       IN      VARCHAR2
+                             ,p_draft_flag       IN      VARCHAR2
+                             ,p_debug_flag       IN      VARCHAR2
+                             ,p_language         IN      VARCHAR2
+                             ,p_user_name        IN      VARCHAR2
+                             ,p_items            IN      XX_FLA_ITEMS_T 
+                             ,x_items            OUT     XX_FLA_ITEMS_T 
+                             ,x_return_status    OUT     VARCHAR2
+                             ,x_msg_error        OUT     VARCHAR2
+                             );
+
+
+/*=========================================================================+
+|                                                                          |
+| Public Procedure                                                         |
+|    CREATE_UPDATE_ITEMS                                                   |
+|                                                                          |
+| Description                                                              |
+|    (descripcion del procedimiento)                                       |
+|                                                                          |
+| Parameters                                                               |
 |    p_request_id       IN      NUMBER   Nro. del requerimiento.           |
 |    p_request_phase_id IN      NUMBER   Nro. de requerimiento de la etapa.|
 |    p_draft_flag       IN      VARCHAR2 Modo borrador.                    |
@@ -112,19 +145,16 @@ PROCEDURE create_update_item_prices(p_request_id       IN      NUMBER
 |    x_msg_error        OUT     VARCHAR2 Mensaje de error.                 |
 |                                                                          |
 +=========================================================================*/
-PROCEDURE create_update_items(p_request_id       IN      NUMBER
-                             ,p_request_phase_id IN      NUMBER
-                             ,p_draft_flag       IN      VARCHAR2
-                             ,p_debug_flag       IN      VARCHAR2
-                             ,p_language         IN      VARCHAR2
-                             ,p_user_name        IN      VARCHAR2
-                             ,p_items            IN      XX_FLA_ITEMS_T 
-                             ,x_items            OUT     XX_FLA_ITEMS_T 
-                             ,x_return_status    OUT     VARCHAR2
-                             ,x_msg_error        OUT     VARCHAR2
-                             );
-
-
+PROCEDURE wrap_create_update_items_json( p_request_id       IN      VARCHAR2
+                                        ,p_step             IN      NUMBER
+                                        ,p_draft_flag       IN      VARCHAR2
+                                        ,p_debug_flag       IN      VARCHAR2
+                                        ,p_language         IN      VARCHAR2
+                                        ,p_user_name        IN      VARCHAR2
+                                        ,x_json_result      OUT     CLOB
+                                        ,x_return_status    OUT     VARCHAR2
+                                        ,x_msg_error        OUT     VARCHAR2
+                                        );
 
 /*=========================================================================+
 |                                                                          |
@@ -162,7 +192,49 @@ PROCEDURE get_indexes (p_request_id       IN      NUMBER
                       );
 
 
+PROCEDURE wrap_get_countries_json ( p_request_id        IN      VARCHAR2
+                                   ,p_step              IN      NUMBER
+                                   ,p_draft_flag        IN      VARCHAR2
+                                   ,p_debug_flag        IN      VARCHAR2
+                                   ,p_language          IN      VARCHAR2
+                                   ,p_user_name         IN      VARCHAR2
+                                   ,x_json_result       OUT     CLOB
+                                   ,x_return_status     OUT     VARCHAR2
+                                   ,x_msg_error         OUT     VARCHAR2
+                                    );
 
+/*=============================================================================+
+|                                                                              |
+| Public Procedure                                                             |
+|    GET_FLA_ITEMS_INT_PARAMS                                                  |
+|                                                                              |
+| Description                                                                  |
+|    (descripcion del procedimiento)                                           |
+|                                                                              |
+| Parameters                                                                   |
+|    p_request_id           IN      VARCHAR2 Nro. del requerimiento.           |
+|    p_draft_flag           IN      VARCHAR2 Modo borrador.                    |
+|    p_debug_flag           IN      VARCHAR2 Flag de debug.                    |
+|    p_language             IN      VARCHAR2 Codigo de lenguaje.               |
+|    p_user_name            IN      VARCHAR2 Usuario.                          |
+|    p_params               IN      VARCHAR2 listado de parametros de entrada  |
+|    x_country_code         OUT     VARCHAR2 codigo de pais.                   |
+|    x_draft_mode           OUT     VARCHAR2 Modo Borrador.                    |
+|    x_return_status        OUT     VARCHAR2 Estado de ejecucion.              |
+|    x_msg_error            OUT     VARCHAR2 Mensaje de error.                 |
+|                                                                              |
++=============================================================================*/
+PROCEDURE get_fla_items_int_params(p_request_id            IN      VARCHAR2
+                                  ,p_draft_flag            IN      VARCHAR2
+                                  ,p_debug_flag            IN      VARCHAR2
+                                  ,p_language              IN      VARCHAR2
+                                  ,p_user_name             IN      VARCHAR2
+                                  ,p_params                IN      VARCHAR2
+                                  ,x_country_code          OUT     VARCHAR2
+                                  ,x_draft_mode            OUT     VARCHAR2
+                                  ,x_return_status         OUT     VARCHAR2
+                                  ,x_msg_error             OUT     VARCHAR2
+                                  );
 /*=========================================================================+
 |                                                                          |
 | Public Procedure                                                         |
@@ -172,8 +244,8 @@ PROCEDURE get_indexes (p_request_id       IN      NUMBER
 |    (descripcion del procedimiento)                                       |
 |                                                                          |
 | Parameters                                                               |
-|    p_request_id       IN      NUMBER   Nro. del requerimiento.           |
-|    p_request_phase_id IN      NUMBER   Nro. de requerimiento de la etapa.|
+|    p_request_id       IN      VARCHAR2   Nro. del requerimiento.           |
+|    p_request_phase_id IN      VARCHAR2   Nro. de requerimiento de la etapa.|
 |    p_draft_flag       IN      VARCHAR2 Modo borrador.                    |
 |    p_debug_flag       IN      VARCHAR2 Flag de debug.                    |
 |    p_language         IN      VARCHAR2 Codigo de lenguaje.               |
@@ -184,8 +256,8 @@ PROCEDURE get_indexes (p_request_id       IN      NUMBER
 |    x_msg_error        OUT     VARCHAR2 Mensaje de error.                 |
 |                                                                          |
 +=========================================================================*/
-PROCEDURE get_countries(p_request_id       IN      NUMBER
-                       ,p_request_phase_id IN      NUMBER
+PROCEDURE get_countries(p_request_id       IN      VARCHAR2
+                       ,p_request_phase_id IN      VARCHAR2
                        ,p_draft_flag       IN      VARCHAR2
                        ,p_debug_flag       IN      VARCHAR2
                        ,p_language         IN      VARCHAR2
@@ -195,6 +267,163 @@ PROCEDURE get_countries(p_request_id       IN      NUMBER
                        ,x_return_status    OUT     VARCHAR2
                        ,x_msg_error        OUT     VARCHAR2
                        );
+
+/*=============================================================================+
+|                                                                              |
+| Public Procedure                                                             |
+|    GET_FLA_SALES_INT_PARAMS                                                  |
+|                                                                              |
+| Description                                                                  |
+|    (descripcion del procedimiento)                                           |
+|                                                                              |
+| Parameters                                                                   |
+|    p_request_id           IN      VARCHAR2 Nro. del requerimiento.           |
+|    p_draft_flag           IN      VARCHAR2 Modo borrador.                    |
+|    p_debug_flag           IN      VARCHAR2 Flag de debug.                    |
+|    p_language             IN      VARCHAR2 Codigo de lenguaje.               |
+|    p_user_name            IN      VARCHAR2 Usuario.                          |
+|    p_params               IN      VARCHAR2 listado de parametros de entrada  |
+|    x_country_code         OUT     VARCHAR2 codigo de pais.                   |
+|    x_init_date            OUT     VARCHAR2 Fecha de inicio.                  |
+|    x_end_date             OUT     VARCHAR2 Fecha de fin.                     |
+|    x_draft_mode           OUT     VARCHAR2 Modo Borrador.                    |
+|    x_return_status        OUT     VARCHAR2 Estado de ejecucion.              |
+|    x_msg_error            OUT     VARCHAR2 Mensaje de error.                 |
+|                                                                              |
++=============================================================================*/
+PROCEDURE get_fla_sales_int_params(p_request_id            IN      VARCHAR2
+                                  ,p_draft_flag            IN      VARCHAR2
+                                  ,p_debug_flag            IN      VARCHAR2
+                                  ,p_language              IN      VARCHAR2
+                                  ,p_user_name             IN      VARCHAR2
+                                  ,p_params                IN      VARCHAR2
+                                  ,x_country_code          OUT     VARCHAR2
+                                  ,x_init_date             OUT     VARCHAR2
+                                  ,x_end_date              OUT     VARCHAR2
+                                  ,x_draft_mode            OUT     VARCHAR2
+                                  ,x_return_status         OUT     VARCHAR2
+                                  ,x_msg_error             OUT     VARCHAR2
+                                  );
+/*=============================================================================+
+|                                                                              |
+| Public Procedure                                                             |
+|    GET_FLA_SALES_TAXES_INT_PARAMS                                            |
+|                                                                              |
+| Description                                                                  |
+|    (descripcion del procedimiento)                                           |
+|                                                                              |
+| Parameters                                                                   |
+|    p_request_id           IN      VARCHAR2 Nro. del requerimiento.           |
+|    p_draft_flag           IN      VARCHAR2 Modo borrador.                    |
+|    p_debug_flag           IN      VARCHAR2 Flag de debug.                    |
+|    p_language             IN      VARCHAR2 Codigo de lenguaje.               |
+|    p_user_name            IN      VARCHAR2 Usuario.                          |
+|    p_params               IN      VARCHAR2 listado de parametros de entrada  |
+|    x_country_code         OUT     VARCHAR2 codigo de pais.                   |
+|    x_init_date            OUT     VARCHAR2 Fecha de inicio.                  |
+|    x_end_date             OUT     VARCHAR2 Fecha de fin.                     |
+|    x_draft_mode           OUT     VARCHAR2 Modo Borrador.                    |
+|    x_return_status        OUT     VARCHAR2 Estado de ejecucion.              |
+|    x_msg_error            OUT     VARCHAR2 Mensaje de error.                 |
+|                                                                              |
++=============================================================================*/
+PROCEDURE get_fla_sales_taxes_int_params( p_request_id            IN      VARCHAR2
+                                         ,p_draft_flag            IN      VARCHAR2
+                                         ,p_debug_flag            IN      VARCHAR2
+                                         ,p_language              IN      VARCHAR2
+                                         ,p_user_name             IN      VARCHAR2
+                                         ,p_params                IN      VARCHAR2
+                                         ,x_country_code          OUT     VARCHAR2
+                                         ,x_init_date             OUT     VARCHAR2
+                                         ,x_end_date              OUT     VARCHAR2
+                                         ,x_draft_mode            OUT     VARCHAR2
+                                         ,x_return_status         OUT     VARCHAR2
+                                         ,x_msg_error             OUT     VARCHAR2
+                                         );
+
+
+/*=============================================================================+
+|                                                                              |
+| Public Procedure                                                             |
+|    GET_FLA_ITEM_PRICES_INT_PARAMS                                            |
+|                                                                              |
+| Description                                                                  |
+|    (descripcion del procedimiento)                                           |
+|                                                                              |
+| Parameters                                                                   |
+|    p_request_id                   IN      VARCHAR2 Nro. del requerimiento.   |
+|    p_draft_flag                   IN      VARCHAR2 Modo borrador.            |
+|    p_debug_flag                   IN      VARCHAR2 Flag de debug.            |
+|    p_language                     IN      VARCHAR2 Codigo de lenguaje.       |
+|    p_user_name                    IN      VARCHAR2 Usuario.                  |
+|    p_params                       IN      VARCHAR2 listado de parametros     |
+|                                                       de entrada             |
+|    x_number_of_previous_months    OUT     NUMBER   Cantidad de meses previos.|
+|    x_country_code                 OUT     VARCHAR2 Codigo de Pais.           |
+|    x_bu                           OUT     NUMBER    Unidad de Negocio.       |
+|    x_items_group                  OUT     VARCHAR2 Items de Grupo.           |
+|    x_acronyms                     OUT     VARCHAR2 Acronimo.                 |
+|    x_cost_center                  OUT     VARCHAR2 Centro de costos.         |
+|    x_item                         OUT     VARCHAR2 Producto.                 |
+|    x_draft_mode                   OUT     VARCHAR2 Modo borrador.            |
+|    x_return_status                OUT     VARCHAR2 Estado de ejecucion.      |
+|    x_msg_error                    OUT     VARCHAR2 Mensaje de error.         |
+|                                                                              |
++=============================================================================*/
+PROCEDURE get_fla_item_prices_int_params( p_request_id                  IN      VARCHAR2
+                                         ,p_draft_flag                  IN      VARCHAR2
+                                         ,p_debug_flag                  IN      VARCHAR2
+                                         ,p_language                    IN      VARCHAR2
+                                         ,p_user_name                   IN      VARCHAR2
+                                         ,p_params                      IN      VARCHAR2
+                                         ,x_number_of_previous_months   OUT     NUMBER
+                                         ,x_country_code                OUT     VARCHAR2
+                                         ,x_bu                          OUT     NUMBER  
+                                         ,x_items_group                 OUT     VARCHAR2
+                                         ,x_acronyms                    OUT     VARCHAR2
+                                         ,x_cost_center                 OUT     VARCHAR2
+                                         ,x_item                        OUT     VARCHAR2
+                                         ,x_draft_mode                  OUT     VARCHAR2
+                                         ,x_return_status               OUT     VARCHAR2
+                                         ,x_msg_error                   OUT     VARCHAR2
+                                         );
+
+
+/*=============================================================================+
+|                                                                              |
+| Public Procedure                                                             |
+|    GET_FLA_INDEX_HIST_LINES_INT_PARAMS                                       |
+|                                                                              |
+| Description                                                                  |
+|    (descripcion del procedimiento)                                           |
+|                                                                              |
+| Parameters                                                                   |
+|    p_request_id                   IN      VARCHAR2 Nro. del requerimiento.   |
+|    p_draft_flag                   IN      VARCHAR2 Modo borrador.            |
+|    p_debug_flag                   IN      VARCHAR2 Flag de debug.            |
+|    p_language                     IN      VARCHAR2 Codigo de lenguaje.       |
+|    p_user_name                    IN      VARCHAR2 Usuario.                  |
+|    p_params                       IN      VARCHAR2 listado de parametros     |
+|                                                       de entrada             |
+|    x_year                         OUT     VARCHAR2 Año.                      |
+|    x_index_name                   OUT     VARCHAR2 Tipo de indice.           |
+|    x_draft_mode                   OUT     VARCHAR2 Modo borrador.            |
+|    x_return_status                OUT     VARCHAR2 Estado de ejecucion.      |
+|    x_msg_error                    OUT     VARCHAR2 Mensaje de error.         |
+|                                                                              |
++=============================================================================*/
+PROCEDURE get_fla_index_hist_lines_int_params( p_request_id         IN      VARCHAR2
+                                              ,p_draft_flag         IN      VARCHAR2
+                                              ,p_debug_flag         IN      VARCHAR2
+                                              ,p_language           IN      VARCHAR2
+                                              ,p_user_name          IN      VARCHAR2
+                                              ,p_params             IN      VARCHAR2
+                                              ,x_year               OUT     VARCHAR2
+                                              ,x_index_name         OUT     VARCHAR2
+                                              ,x_draft_mode         OUT     VARCHAR2
+                                              ,x_return_status      OUT     VARCHAR2
+                                              ,x_msg_error          OUT     VARCHAR2
+                                              );
 
 /*=========================================================================+
 |                                                                          |
@@ -215,10 +444,6 @@ PROCEDURE get_countries(p_request_id       IN      NUMBER
 |    p_init_date        IN      DATE Fecha inicio.                         |
 |    p_end_date         IN      DATE Fecha Fin.                            |
 |    x_items            OUT     XX_FLA_SALES_COUNTRIES_T Listado de paises.|
-|    x_sales_str        OUT     XX_FLA_SALES_UNIQUE_REPORT_T               | 
-|                                           Listado de registros resultado.|
-|    x_sales_taxes_str  OUT     XX_FLA_SALES_TAXES_UNIQUE_REPORT_T         | 
-|                                           Listado de registros resultado.|
 |    x_return_status    OUT     VARCHAR2 Estado de ejecucion.              |
 |    x_msg_error        OUT     VARCHAR2 Mensaje de error.                 |
 |                                                                          |
@@ -233,8 +458,6 @@ PROCEDURE get_sales_countries(p_request_id       IN      NUMBER
                              ,p_init_date        IN      DATE
                              ,p_end_date         IN      DATE
                              ,x_items            OUT     XX_FLA_SALES_COUNTRIES_T
-                             ,x_sales_str        OUT     XX_FLA_SALES_UNIQUE_REPORT_T
-                             ,x_sales_taxes_str  OUT     XX_FLA_SALES_TAXES_UNIQUE_REPORT_T
                              ,x_return_status    OUT     VARCHAR2
                              ,x_msg_error        OUT     VARCHAR2
                              );
